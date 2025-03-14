@@ -8,7 +8,12 @@ if command -v conda >/dev/null 2>&1; then
   fi
 fi
 
-source /opt/ros/rolling/setup.sh
+if [ -d /opt/ros/rolling ]; then
+    source /opt/ros/rolling/setup.sh
+elif [ -d ~/ros2_rolling ]; then
+    source ~/ros2_rolling/install/setup.sh
+fi
+
 if [ -d install/ ]; then
     source install/setup.sh
 fi

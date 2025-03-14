@@ -18,7 +18,9 @@ sudo apt update
 sudo apt upgrade
 sudo apt full-upgrade
 
-sudo apt install git
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-aarch64.sh
+bash Miniconda3-latest-Linux-aarch64.sh
+rm Miniconda3-latest-Linux-aarch64.sh
 ```
 
 # Install ROS Rolling
