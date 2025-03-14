@@ -1,0 +1,4 @@
+[submodule "src/microstrain_inertial"]
+	path = src/microstrain_inertial
+	url = https://github.com/LORD-MicroStrain/microstrain_inertial
+	branch = ros2
