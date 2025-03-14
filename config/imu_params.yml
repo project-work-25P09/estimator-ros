@@ -1,0 +1,4 @@
+microstrain_inertial_driver:
+  ros__parameters:
+    port: /dev/imu
+    baudrate: 115200

@@ -24,4 +24,6 @@ colcon build --symlink-install
 ## Usage
 
 ```bash
+# Test IMU
+ros2 launch microstrain_inertial_driver microstrain_launch.py params_file:=config/imu_params.yml
 ```
