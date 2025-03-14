@@ -66,6 +66,11 @@ sudo rosdep init
 rosdep update
 rosdep install --from-paths src --ignore-src -y --skip-keys "fastcdr rti-connext-dds-6.0.1 urdfdom_headers" --os=ubuntu:jammy --rosdistro=rolling
 colcon build --symlink-install # ~2h 30min
+
+git clone https://github.com/ros-drivers/nmea_msgs.git -b ros2 src/nmea_msgs
+git clone https://github.com/tilk/rtcm_msgs src/rtcm_msgs
+rosdep install --from-paths src --ignore-src -r -y
+colcon build --symlink-install --packages-select nmea_msgs rtcm_msgs
 ```
 
 ## SSH keys

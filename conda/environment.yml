@@ -10,8 +10,11 @@ dependencies:
 - pip:
     - catkin_pkg
     - empy
-    - numpy
+    - typing-extensions
     - lark-parser
+    - pydantic>=1.7.4,<3.0.0
+    - idna>=2.8
+    - numpy
     - pyserial
     - fastapi
     - uvicorn[standard]
