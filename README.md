@@ -24,6 +24,7 @@ git clone --recursive https://github.com/project-work-25P09/estimator-ros estima
 cd estimator-ros
 
 . source.sh
+rosdep install --from-paths src/ -i -r -y
 colcon build --symlink-install
 ```
 
