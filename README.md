@@ -14,7 +14,6 @@ cd estimator-ros
 
 # conda (recommended)
 conda env create -f conda/environment.yml
-conda activate estimator-ros
 
 . source.sh
 rosdep install --from-paths src/ -i -r -y

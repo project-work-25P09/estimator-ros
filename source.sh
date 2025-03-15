@@ -11,7 +11,7 @@ fi
 if [ -d /opt/ros/rolling ]; then
     source /opt/ros/rolling/setup.bash
 elif [ -d /opt/ros/humble ]; then
-    source /opt/ros/humble/install/setup.bash
+    source /opt/ros/humble/setup.bash
 elif [ -d ~/ros2_rolling/install ]; then
     source ~/ros2_rolling/install/setup.bash
 fi
