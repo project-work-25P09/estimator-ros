@@ -44,4 +44,5 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-a
 sudo apt update
 sudo apt install ros-humble-ros-base
 sudo apt install ros-dev-tools
+sudo apt install libopenblas-dev
 ```

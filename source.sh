@@ -1,10 +1,12 @@
 #!/bin/sh
 
-# use conda env if available
+# use conda env if available and not already activated
 if command -v conda >/dev/null 2>&1; then
   source "$(conda info --base)/etc/profile.d/conda.sh"
-  if conda env list | grep -q '^\s*estimator-ros\s'; then
-    conda activate estimator-ros
+  if [ "$CONDA_DEFAULT_ENV" != "estimator-ros" ]; then
+    if conda env list | grep -q '^\s*estimator-ros\s'; then
+      conda activate estimator-ros
+    fi
   fi
 fi
 
@@ -16,10 +18,8 @@ elif [ -d ~/ros2_rolling/install ]; then
     source ~/ros2_rolling/install/setup.bash
 fi
 
+export PYTHONPATH="${CONDA_PREFIX}/lib/python3.10/site-packages"
+
 if [ -d install/ ]; then
     source install/setup.sh
 fi
-
-export PYTHONPATH="${CONDA_PREFIX}/lib/python3.12/site-packages:$PYTHONPATH"
-# export ROS_DOMAIN_ID=10
-# export RMW_IMPLEMENTATION=rmw_fastrtps_cpp

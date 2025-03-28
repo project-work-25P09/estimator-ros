@@ -2,7 +2,7 @@ name: estimator-ros
 channels:
 - conda-forge
 dependencies:
-- python=3.12
+- python=3.10
 - pip
 - cmake
 - ninja
@@ -12,7 +12,8 @@ dependencies:
     - empy>=3.1.0,<4.0.0
     - typing-extensions
     - lark-parser
-    - pydantic>=1.7.4,<3.0.0
+    - pydantic
+    - pydantic-core
     - idna>=2.8
     - numpy
     - pyserial
