@@ -21,3 +21,4 @@ dependencies:
     - uvicorn[standard]
     - psutil
     - dash
+    - evdev
