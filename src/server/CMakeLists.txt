@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.10)
 project(server)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -21,6 +21,7 @@ endif()
 install(DIRECTORY web DESTINATION share/${PROJECT_NAME})
 install(PROGRAMS
   "scripts/start_server.py"
+  "scripts/start_server_dash.py"
   DESTINATION lib/${PROJECT_NAME}
 )
 
