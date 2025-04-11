@@ -20,13 +20,13 @@ class EstimatorNode(Node):
     def optical_callback(self, optical_msg: Point):
         self.current_position.x += optical_msg.x * self.optical_to_mm
         self.current_position.y += optical_msg.y * self.optical_to_mm
-        self.current_position.z = 0
+        self.current_position.z = 0.0
 
         self.est_pub.publish(self.current_position)
-        self.get_logger().info(
-            f"x={optical_msg.x}, y={optical_msg.y} "
-            f"-> New est_position: (x={self.current_position.x}, y={self.current_position.y}, z={self.current_position.z})"
-        )
+        # self.get_logger().info(
+        #     f"x={optical_msg.x}, y={optical_msg.y} "
+        #     f"-> New est_position: (x={self.current_position.x}, y={self.current_position.y}, z={self.current_position.z})"
+        # )
 
     def imu_callback(self, imu_msg: Imu):
         # self.current_position.z = imu_msg.linear_acceleration.z

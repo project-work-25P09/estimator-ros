@@ -1,35 +1,52 @@
 #!/usr/bin/env python3
-import pandas as pd
 import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output
 import plotly.graph_objects as go
-import os
-import time
 import threading
+import time
 
-file = "./data/trajectory001.csv"
+import rclpy
+from rclpy.node import Node
+from geometry_msgs.msg import Point as RosPoint
+
+positions = []
+positions_lock = threading.Lock()
+
+class EstPositionListener(Node):
+    def __init__(self):
+        super().__init__('est_position_listener')
+        self.subscription = self.create_subscription(
+            RosPoint,
+            '/est_position',
+            self.listener_callback,
+            10
+        )
+
+    def listener_callback(self, msg):
+        global positions, positions_lock
+        with positions_lock:
+            positions.append((msg.x, msg.y, msg.z))
+            if len(positions) > 1000:
+                positions.pop(0)
+
+def ros_spin():
+    rclpy.init(args=None)
+    node = EstPositionListener()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
 app = dash.Dash(__name__)
-
-trajectory_name = os.path.basename(file1).split('.')[0]
-
-def main():
-    thread = threading.Thread(target=update_data_periodically)
-    thread.daemon = True
-    thread.start()
-    app.run_server(host="0.0.0.0", port=8000, debug=True)
-
-def read_and_clean_csv(file_path):
-    delimiter_pattern = r"[,\t\s]+"
-    df = pd.read_csv(file_path, delimiter=delimiter_pattern, engine="python")
-    df.columns = df.columns.str.strip()
-    return df
-
 app.layout = html.Div([
     dcc.Graph(id='real-time-plot'),
     dcc.Interval(
         id='interval-update',
-        interval=1000,
+        interval=250,
         n_intervals=0
     )
 ])
@@ -39,37 +56,44 @@ app.layout = html.Div([
     [Input('interval-update', 'n_intervals')]
 )
 def update_plot(n_intervals):
-    df = read_and_clean_csv(file)
+    global positions, positions_lock
+    with positions_lock:
+        data = positions.copy()
 
-    if {'x', 'y', 'z'}.issubset(df.columns):
-        new_fig = go.Figure()
+    if not data:
+        return go.Figure()
 
-        new_fig.add_trace(go.Scatter3d(
-            x=df['x'], y=df['y'], z=df['z'],
-            mode='lines+markers',
-            marker=dict(size=5, color='blue'),
-            line=dict(width=2, color='blue'),
-            name=trajectory_name
-        ))
+    x = [pt[0] for pt in data]
+    y = [pt[1] for pt in data]
+    z = [pt[2] for pt in data]
 
-        new_fig.update_layout(
-            scene=dict(
-                xaxis_title="X Axis",
-                yaxis_title="Y Axis",
-                zaxis_title="Z Axis",
-                aspectmode="cube",
-                camera=dict(
-                    eye=dict(x=2, y=1, z=3)
-                )
-            ),
-            margin=dict(l=0, r=0, b=0, t=20),
-        )
+    fig = go.Figure()
+    fig.add_trace(go.Scatter3d(
+        x=x, y=y, z=z,
+        mode='lines+markers',
+        marker=dict(size=5, color='blue'),
+        line=dict(width=2, color='blue'),
+        name="Estimated Trajectory"
+    ))
+    fig.update_layout(
+        scene=dict(
+            xaxis_title="X Axis",
+            yaxis_title="Y Axis",
+            zaxis_title="Z Axis",
+            aspectmode="cube",
+            camera=dict(
+                eye=dict(x=2, y=1, z=3)
+            )
+        ),
+        margin=dict(l=0, r=0, b=0, t=20),
+    )
+    return fig
 
-        return new_fig
+def main():
+    ros_thread = threading.Thread(target=ros_spin, daemon=True)
+    ros_thread.start()
 
-def update_data_periodically():
-    while True:
-        time.sleep(1)
+    app.run(host="0.0.0.0", port=8000, debug=True)
 
 if __name__ == '__main__':
     main()
