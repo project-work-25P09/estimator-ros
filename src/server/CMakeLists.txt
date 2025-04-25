@@ -8,7 +8,7 @@ endif()
 find_package(rclpy REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 find_package(ament_cmake REQUIRED)
-
+find_package(estimation REQUIRED)
 find_package(std_msgs REQUIRED)
 
 if(BUILD_TESTING)
@@ -22,6 +22,7 @@ install(DIRECTORY web DESTINATION share/${PROJECT_NAME})
 install(PROGRAMS
   "scripts/start_server.py"
   "scripts/start_server_dash.py"
+  "scripts/start_server_dash_full.py"
   DESTINATION lib/${PROJECT_NAME}
 )
 

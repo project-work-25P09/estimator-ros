@@ -3,18 +3,30 @@ import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Point
 from sensor_msgs.msg import Imu
+from estimation.msg import Estimation
 
 class EstimatorNode(Node):
     def __init__(self):
         super().__init__('estimator_node')
 
-        self.est_pub = self.create_publisher(Point, '/est_position', 10)
+        self.est_pub = self.create_publisher(Estimation, '/estimation', 10)
         self.create_subscription(Point, '/optical', self.optical_callback, 10)
         self.create_subscription(Imu, '/imu/data', self.imu_callback, 10)
 
         self.optical_to_mm = 3000.0 / 19000.0
 
-        self.current_position = Point(x=0.0, y=0.0, z=0.0)
+        self.current_position = Estimation(
+          x=0.0, y=0.0, z=0.0,
+          yaw=0.0, pitch=0.0, roll=0.0,
+          acc_x=0.0, acc_y=0.0, acc_z=0.0,
+          acc_yaw=0.0, acc_pitch=0.0, acc_roll=0.0,
+          mag_x=0.0, mag_y=0.0, mag_z=0.0,
+          mag_strength=0.0,
+          mouse_movement=0.0,
+          mouse_speed=0.0,
+          mouse_direction=0.0,
+          mouse_distance=0.0,
+        )
         self.get_logger().info("EstimatorNode initialized.")
 
     def optical_callback(self, optical_msg: Point):
