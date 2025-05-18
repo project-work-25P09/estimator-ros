@@ -8,6 +8,7 @@ import numpy as np
 import math
 import os
 import time
+import yaml
 from estimation_pkg.ekf import InertialEKF, quaternion_to_euler
 
 class EstimatorNode(Node):
@@ -30,13 +31,23 @@ class EstimatorNode(Node):
         self.file_imu = None
         self.file_estimation = None
 
-        self.optical_to_m = 2.0 * 3000.0/19000.0 * 1e-3
+        self.config_calibration_fp = './config/calibration.yml'
+        self.config_estimation_fp = './config/est_params.yml'
 
-        dt = 1.0/200.0
-        Q = np.eye(15)*1e-4
-        R_imu = np.eye(3)*0.5
-        R_opt = np.eye(2)*(0.1**2)
-        m_ref = np.array([0.,0.,0.])
+        with open(self.config_calibration_fp, 'r') as f:
+            calib = yaml.safe_load(f)
+        opt_cfg = calib.get('optical', {})
+        self.optical_x_to_m = opt_cfg.get('x_to_m', 1.0)
+        self.optical_y_to_m = opt_cfg.get('y_to_m', 1.0)
+
+        with open(self.config_estimation_fp, 'r') as f:
+            est_cfg = yaml.safe_load(f)
+
+        dt = est_cfg.get('dt', 1.0/200.0)
+        Q = np.array(est_cfg.get('Q', np.eye(15).tolist()))
+        R_imu = np.array(est_cfg.get('R_imu', np.eye(3).tolist()))
+        R_opt = np.array(est_cfg.get('R_opt', np.eye(2).tolist()))
+        m_ref = np.array(est_cfg.get('m_ref', [0.0, 0.0, 0.0]))
 
         self.ekf = InertialEKF(dt, Q, R_imu, R_opt, m_ref)
         self.get_logger().info('EstimatorNode started.')
