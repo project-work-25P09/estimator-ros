@@ -36,6 +36,12 @@ def generate_launch_description():
     #     output="screen",
     # )
 
+    # Define the hardware monitor launch path
+    hw_monitor_path = os.path.join(
+        get_package_share_directory('rpi_hw_monitor'),
+        'launch',
+        'hw_monitor_launch.py'
+    )
 
     ld = LaunchDescription([
         optical,
@@ -56,6 +62,13 @@ def generate_launch_description():
     ld.add_action(
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource([microstrain_path]),
+        ),
+    )
+    
+    # Add hardware monitor launch
+    ld.add_action(
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource([hw_monitor_path]),
         ),
     )
 

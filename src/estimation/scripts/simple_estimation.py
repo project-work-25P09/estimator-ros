@@ -110,7 +110,8 @@ class EstimatorNode(Node):
     def cb_imu_save(self, imu):
         if not self.do_save or not self.do_save_imu:
             return
-        ts = time.time()
+        # Use ROS timestamp from the IMU message
+        ros_timestamp = imu.header.stamp.sec + (imu.header.stamp.nanosec / 1e9)
         data = [
             imu.linear_acceleration.x,
             imu.linear_acceleration.y,
@@ -123,22 +124,26 @@ class EstimatorNode(Node):
             imu.orientation.z,
             imu.orientation.w,
         ]
-        self.file_imu.write(f"{ts},{','.join(f'{x}' for x in data)}\n")
+        self.file_imu.write(f"{ros_timestamp},{','.join(f'{x}' for x in data)}\n")
 
     def cb_optical_save(self, optical):
         if not self.do_save or not self.do_save_optical:
             return
-        ts = time.time()
+        # Use current ROS time since Point messages don't have timestamps
+        ros_time = self.get_clock().now()
+        ros_timestamp = ros_time.seconds_nanoseconds()
+        ros_timestamp_sec = ros_timestamp[0] + (ros_timestamp[1] / 1e9)
         data = [
             optical.x,
             optical.y,
         ]
-        self.file_optical.write(f"{ts},{','.join(str(x) for x in data)}\n")
+        self.file_optical.write(f"{ros_timestamp_sec},{','.join(str(x) for x in data)}\n")
 
     def cb_estimation_save(self, estimation):
         if not self.do_save or not self.do_save_estimation:
             return
-        ts = time.time()
+        # Use ROS timestamp instead of system time
+        ros_timestamp = estimation.stamp.sec + (estimation.stamp.nanosec / 1e9)
         data = [
             estimation.x,
             estimation.y,
@@ -161,7 +166,7 @@ class EstimatorNode(Node):
             estimation.mouse_direction,
             estimation.mouse_distance,
         ]
-        self.file_estimation.write(f"{ts},{','.join(str(x) for x in data)}\n")
+        self.file_estimation.write(f"{ros_timestamp},{','.join(str(x) for x in data)}\n")
 
 
         

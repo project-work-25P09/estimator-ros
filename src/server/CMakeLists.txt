@@ -10,6 +10,7 @@ find_package(ament_cmake_python REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(estimation REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(rpi_hw_monitor REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
