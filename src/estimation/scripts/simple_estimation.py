@@ -7,6 +7,7 @@ from estimation.msg import Estimation
 import numpy as np
 import math
 import os
+import time
 
 # -------------------------------------------------------------------
 # === Quaternion & EKF implementation ===
@@ -134,10 +135,10 @@ class EstimatorNode(Node):
         self.create_subscription(Point, '/optical', self.optical_callback, 10)
         self.create_subscription(Imu,   '/imu/data',  self.imu_callback,    200)
 
-        self.do_save = False
-        self.do_save_imu = False
-        self.do_save_optical = False
-        self.do_save_estimation = False
+        self.do_save = True
+        self.do_save_imu = True
+        self.do_save_optical = True
+        self.do_save_estimation = True
         self.save_fp = "./data/trajectory002"
         self.save_optical_fp = os.path.join(self.save_fp, "optical.csv")
         self.save_imu_fp = os.path.join(self.save_fp, "imu.csv")
@@ -182,6 +183,8 @@ class EstimatorNode(Node):
 
         self.publish_estimation()
 
+        self.cb_imu_save(imu_msg)
+
     def optical_callback(self, opt_msg: Point):
         # convert flow->velocity (m/s)
         flow_x = opt_msg.x * self.optical_to_m
@@ -191,6 +194,7 @@ class EstimatorNode(Node):
         self.ekf.update_optical(flow_x, flow_y)
 
         self.publish_estimation()
+        self.cb_optical_save(opt_msg)
 
     def publish_estimation(self):
         est = Estimation()
@@ -210,29 +214,76 @@ class EstimatorNode(Node):
         est.mouse_distance  = math.hypot(est.x, est.y)
 
         self.est_pub.publish(est)
+        self.cb_estimation_save(est)
 
     def cb_imu_save(self, imu):
         if not self.do_save or not self.do_save_imu:
             return
+        ts = time.time()
+        data = [
+            imu.linear_acceleration.x,
+            imu.linear_acceleration.y,
+            imu.linear_acceleration.z,
+            imu.angular_velocity.x,
+            imu.angular_velocity.y,
+            imu.angular_velocity.z,
+            imu.orientation.x,
+            imu.orientation.y,
+            imu.orientation.z,
+            imu.orientation.w,
+        ]
+        self.file_imu.write(f"{ts},{','.join(f'{x}' for x in data)}\n")
 
     def cb_optical_save(self, optical):
         if not self.do_save or not self.do_save_optical:
             return
+        ts = time.time()
+        data = [
+            optical.x,
+            optical.y,
+        ]
+        self.file_optical.write(f"{ts},{','.join(str(x) for x in data)}\n")
 
     def cb_estimation_save(self, estimation):
         if not self.do_save or not self.do_save_estimation:
             return
+        ts = time.time()
+        data = [
+            estimation.x,
+            estimation.y,
+            estimation.z,
+            estimation.yaw,
+            estimation.pitch,
+            estimation.roll,
+            estimation.acc_x,
+            estimation.acc_y,
+            estimation.acc_z,
+            estimation.acc_yaw,
+            estimation.acc_pitch,
+            estimation.acc_roll,
+            estimation.mag_x,
+            estimation.mag_y,
+            estimation.mag_z,
+            estimation.mag_strength,
+            estimation.mouse_movement,
+            estimation.mouse_speed,
+            estimation.mouse_direction,
+            estimation.mouse_distance,
+        ]
+        self.file_estimation.write(f"{ts},{','.join(str(x) for x in data)}\n")
+
+
         
     def start_saving(self):
         self.get_logger().info(f"Started saving to {self.save_fp}")
         if not os.path.exists(self.save_fp):
-            os.path.mkdir(self.save_fp)
+            os.mkdir(self.save_fp)
         if self.do_save_optical:
-            self.file_optical = open(self.save_optical_fp, "a")
+            self.file_optical = open(self.save_optical_fp, "w")
         if self.do_save_imu:
-            self.file_imu = open(self.save_imu_fp, "a")
+            self.file_imu = open(self.save_imu_fp, "w")
         if self.do_save_estimation:
-            self.file_estimation = open(self.save_estimation_fp, "a")
+            self.file_estimation = open(self.save_estimation_fp, "w")
 
     def end_saving(self):
         self.get_logger().info(f"Ended saving to {self.save_fp}")
