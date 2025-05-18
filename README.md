@@ -20,6 +20,14 @@ colcon build --symlink-install
 
 ## Usage
 
+To start everything, use the monolithic start script:
+
+```bash
+ros2 launch main main_launch.py
+```
+
+Alternatively, you can manually start things, like so:
+
 ```bash
 # Test IMU
 ros2 launch microstrain_inertial_driver microstrain_launch.py params_file:=config/imu_params.yml
