@@ -23,4 +23,14 @@ Place the estimated coefficients to `calibration.yml`.
 
 ## IMU
 
-TODO
+The IMU needs to be calibrated for:
+
+- Gyro bias & scale
+- Accelerometer bias & scale
+- Magnetometer hard- & soft-iron
+
+### Static IMU calibration
+
+```bash
+# TODO
+```
