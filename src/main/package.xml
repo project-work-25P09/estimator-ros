@@ -3,8 +3,8 @@
 <package format="3">
   <name>main</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="project@todo.todo">project</maintainer>
+  <description>Main</description>
+  <maintainer email="project-work-25P09@github.com">project</maintainer>
   <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
