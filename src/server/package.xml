@@ -13,6 +13,7 @@
   <test_depend>ament_lint_common</test_depend>
 
   <depend>estimation</depend>
+  <depend>rpi_hw_monitor</depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>launch</exec_depend>
 

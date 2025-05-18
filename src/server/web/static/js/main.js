@@ -6,7 +6,8 @@ let measurementData = {
     orientation: [],
     acceleration: [],
     magnetometer: [],
-    mouse: []
+    mouse: [],
+    hardware: []
 };
 
 let charts = {};
@@ -268,6 +269,60 @@ function initCharts() {
         plot_bgcolor: 'rgba(0, 0, 30, 0.8)',
         font: { color: 'white' }
     }, { responsive: true });
+    
+    // Initialize hardware monitor plot
+    charts.hardware = new Plotly.newPlot('hardware-plot', [{
+        type: 'scatter',
+        mode: 'lines',
+        x: [],
+        y: [],
+        name: 'CPU Usage',
+        line: { color: 'red', width: 2 }
+    }, {
+        type: 'scatter',
+        mode: 'lines',
+        x: [],
+        y: [],
+        name: 'Memory (MB)',
+        line: { color: 'green', width: 2 },
+        yaxis: 'y2'
+    }, {
+        type: 'scatter',
+        mode: 'lines',
+        x: [],
+        y: [],
+        name: 'Temperature (°C)',
+        line: { color: 'orange', width: 2 },
+        yaxis: 'y3'
+    }], {
+        title: 'Hardware Monitor Data',
+        xaxis: { title: 'Time' },
+        yaxis: { title: 'CPU Usage (%)' },
+        yaxis2: {
+            title: 'Memory (MB)',
+            overlaying: 'y',
+            side: 'right',
+            showgrid: false
+        },
+        yaxis3: {
+            title: 'Temperature (°C)',
+            overlaying: 'y',
+            side: 'right',
+            position: 0.85,
+            showgrid: false
+        },
+        legend: {
+            orientation: 'h',
+            yanchor: 'bottom',
+            y: 1.02,
+            xanchor: 'right',
+            x: 1
+        },
+        margin: { l: 50, r: 50, b: 50, t: 50 },
+        paper_bgcolor: 'rgba(0, 0, 0, 0.8)',
+        plot_bgcolor: 'rgba(0, 0, 30, 0.8)',
+        font: { color: 'white' }
+    }, { responsive: true });
 }
 
 function updateCharts(data) {
@@ -316,6 +371,22 @@ function updateCharts(data) {
     document.getElementById('mouse-speed').textContent = data.mouse_speed.toFixed(4);
     document.getElementById('mouse-direction').textContent = `${data.mouse_direction.toFixed(4)}°`;
     document.getElementById('mouse-distance').textContent = data.mouse_distance.toFixed(4);
+    
+    // Hardware monitor data update (if available)
+    if (data.hw_cpu_usage !== undefined) {
+        const hardwareUpdate = {
+            x: [[measurementData.hardware.length], [measurementData.hardware.length], [measurementData.hardware.length]],
+            y: [[data.hw_cpu_usage], [data.hw_memory_mb], [data.hw_temperature]]
+        };
+        
+        Plotly.extendTraces('hardware-plot', hardwareUpdate, [0, 1, 2], 100);
+        
+        // Update hardware monitor numeric displays
+        document.getElementById('hw-cpu-usage').textContent = `${data.hw_cpu_usage.toFixed(2)}%`;
+        document.getElementById('hw-memory').textContent = `${data.hw_memory_mb.toFixed(2)} MB`;
+        document.getElementById('hw-temperature').textContent = `${data.hw_temperature.toFixed(2)}°C`;
+        document.getElementById('hw-network').textContent = `↓${data.hw_network_rx_mb.toFixed(2)} MB/s ↑${data.hw_network_tx_mb.toFixed(2)} MB/s`;
+    }
 }
 
 function updateDataStore(data) {
@@ -362,6 +433,21 @@ function updateDataStore(data) {
             distance: data.mouse_distance,
             timestamp: new Date().toISOString()
         });
+        
+        // Store hardware monitor data if available
+        if (data.hw_cpu_usage !== undefined) {
+            measurementData.hardware.push({
+                cpu_usage: data.hw_cpu_usage,
+                memory_mb: data.hw_memory_mb,
+                disk_rx_mb: data.hw_disk_rx_mb,
+                disk_tx_mb: data.hw_disk_tx_mb,
+                network_rx_mb: data.hw_network_rx_mb,
+                network_tx_mb: data.hw_network_tx_mb,
+                power_consumption: data.hw_power_consumption,
+                temperature: data.hw_temperature,
+                timestamp: new Date().toISOString()
+            });
+        }
     }
 }
 
@@ -414,6 +500,14 @@ function setupEventListeners() {
             { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Direction', line: { color: 'green', width: 2 } },
             { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Speed', line: { color: 'red', width: 2 }, yaxis: 'y2' },
             { type: 'bar', x: [], y: [], name: 'Distance', marker: { color: 'blue' }, opacity: 0.1, yaxis: 'y2' }
+        ]);
+        
+        // Reset hardware monitor plot
+        Plotly.deleteTraces('hardware-plot', [0, 1, 2]);
+        Plotly.addTraces('hardware-plot', [
+            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'CPU Usage', line: { color: 'red', width: 2 } },
+            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Memory (MB)', line: { color: 'green', width: 2 }, yaxis: 'y2' },
+            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Temperature (°C)', line: { color: 'orange', width: 2 }, yaxis: 'y3' }
         ]);
     });
     
@@ -490,7 +584,8 @@ function saveRecording() {
                 orientation: [],
                 acceleration: [],
                 magnetometer: [],
-                mouse: []
+                mouse: [],
+                hardware: []
             };
         } else {
             alert('Failed to save recording: ' + data.error);

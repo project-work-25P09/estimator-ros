@@ -176,7 +176,10 @@ def get_latest_data():
         
         latest = data_ros[-1]
         
-        return {
+        # Get the latest hardware monitor data if available
+        hw_data = api.dashboard_ros.get_latest_hw_data() if api and api.dashboard_ros else None
+        
+        data = {
             "x": latest[0],
             "y": latest[1],
             "z": latest[2],
@@ -198,6 +201,21 @@ def get_latest_data():
             "mouse_direction": latest[18],
             "mouse_distance": latest[19]
         }
+        
+        # Add hardware monitor data if available
+        if hw_data:
+            data.update({
+                "hw_cpu_usage": hw_data["cpu_usage"],
+                "hw_memory_mb": hw_data["memory_mb"],
+                "hw_disk_rx_mb": hw_data["disk_rx_mb"],
+                "hw_disk_tx_mb": hw_data["disk_tx_mb"],
+                "hw_network_rx_mb": hw_data["network_rx_mb"],
+                "hw_network_tx_mb": hw_data["network_tx_mb"],
+                "hw_power_consumption": hw_data["power_consumption"],
+                "hw_temperature": hw_data["temperature"]
+            })
+        
+        return data
 
 def main():
     # Initialize ROS
