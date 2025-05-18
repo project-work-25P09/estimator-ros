@@ -6,6 +6,7 @@ from sensor_msgs.msg import Imu, MagneticField
 from estimation.msg import Estimation
 import numpy as np
 import math
+import os
 
 # -------------------------------------------------------------------
 # === Quaternion & EKF implementation ===
@@ -133,6 +134,18 @@ class EstimatorNode(Node):
         self.create_subscription(Point, '/optical', self.optical_callback, 10)
         self.create_subscription(Imu,   '/imu/data',  self.imu_callback,    200)
 
+        self.do_save = False
+        self.do_save_imu = False
+        self.do_save_optical = False
+        self.do_save_estimation = False
+        self.save_fp = "./data/trajectory002"
+        self.save_optical_fp = os.path.join(self.save_fp, "optical.csv")
+        self.save_imu_fp = os.path.join(self.save_fp, "imu.csv")
+        self.save_estimation_fp = os.path.join(self.save_fp, "estimation.csv")
+        self.file_optical = None
+        self.file_imu = None
+        self.file_estimation = None
+
         # optical‐to‐meters scale
         self.optical_to_m = 2.0 * 3000.0/19000.0 * 1e-3
 
@@ -145,6 +158,8 @@ class EstimatorNode(Node):
 
         self.ekf = InertialEKF(dt, Q, R_imu, R_opt, m_ref)
         self.get_logger().info('EstimatorNode started.')
+
+        self.start_saving()
 
     def imu_callback(self, imu_msg: Imu):
         # build numpy vectors
@@ -195,6 +210,41 @@ class EstimatorNode(Node):
         est.mouse_distance  = math.hypot(est.x, est.y)
 
         self.est_pub.publish(est)
+
+    def cb_imu_save(self, imu):
+        if not self.do_save or not self.do_save_imu:
+            return
+
+    def cb_optical_save(self, optical):
+        if not self.do_save or not self.do_save_optical:
+            return
+
+    def cb_estimation_save(self, estimation):
+        if not self.do_save or not self.do_save_estimation:
+            return
+        
+    def start_saving(self):
+        self.get_logger().info(f"Started saving to {self.save_fp}")
+        if not os.path.exists(self.save_fp):
+            os.path.mkdir(self.save_fp)
+        if self.do_save_optical:
+            self.file_optical = open(self.save_optical_fp, "a")
+        if self.do_save_imu:
+            self.file_imu = open(self.save_imu_fp, "a")
+        if self.do_save_estimation:
+            self.file_estimation = open(self.save_estimation_fp, "a")
+
+    def end_saving(self):
+        self.get_logger().info(f"Ended saving to {self.save_fp}")
+        if self.file_optical is not None:
+            self.file_optical.close()
+            self.file_optical = None
+        if self.file_imu is not None:
+            self.file_imu.close()
+            self.file_imu = None
+        if self.file_estimation is not None:
+            self.file_estimation.close()
+            self.file_estimation = None
 
 def main(args=None):
     rclpy.init(args=args)
