@@ -38,7 +38,8 @@ class EstimatorNode(Node):
         with open(self.config_calibration_fp, 'r') as f:
             calib = yaml.safe_load(f)
         opt_cfg = calib.get('optical', {})
-        self.optical_to_m = opt_cfg.get('x_to_m', 1.0)
+        self.optical_x_to_m = opt_cfg.get('x_to_m', 1.0)
+        self.optical_y_to_m = opt_cfg.get('y_to_m', 1.0)
 
         with open(self.config_estimation_fp, 'r') as f:
             est_cfg = yaml.safe_load(f)
@@ -77,8 +78,8 @@ class EstimatorNode(Node):
         self.cb_imu_save(imu_msg)
 
     def optical_callback(self, opt_msg: Point):
-        flow_x = opt_msg.x * self.optical_to_m
-        flow_y = opt_msg.y * self.optical_to_m
+        flow_x = opt_msg.x * self.optical_x_to_m
+        flow_y = opt_msg.y * self.optical_y_to_m
 
         self.ekf.update_optical(flow_x, flow_y)
 
