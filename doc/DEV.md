@@ -21,3 +21,10 @@ ros2 run optical_sensor start_optical.py &
 ros2 run estimation simple_estimation.py &
 ros2 run server start_server_dash.py
 ```
+
+## Performance monitoring
+
+```bash
+ros2 launch rpi_hw_monitor hw_monitor_launch.py &
+ros2 topic echo /hw_status
+```
