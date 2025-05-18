@@ -2,3 +2,6 @@
 	path = src/microstrain_inertial
 	url = https://github.com/LORD-MicroStrain/microstrain_inertial
 	branch = ros2
+[submodule "src/rpi-hardware-monitor-ros"]
+	path = src/rpi-hardware-monitor-ros
+	url = git@hwmon:project-work-25P09/rpi-hardware-monitor-ros.git
