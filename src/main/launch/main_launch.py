@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-from launch_ros.actions import LifecycleNode, LifecycleTransition
+from launch_ros.actions import Node, LifecycleNode, LifecycleTransition
 from lifecycle_msgs.msg import Transition
+
 
 import launch
 from launch import LaunchDescription
@@ -16,6 +17,25 @@ def generate_launch_description():
                 namespace="/",
                 output="log",
             ),
+            LifecycleNode(
+                package="microstrain_inertial_driver",
+                executable="microstrain_launch.py",
+                name="microstrain_intertial_node",
+                namespace="/",
+                output="log",
+            ),
+            Node(
+                package="estimation",
+                executable="simple_estimation.py",
+                name="estimation_node",
+                output="log",
+            ),
+            Node(
+                package="server",
+                executable="start_server_dash_full.py",
+                name="server_node",
+                output="log",
+            ),
         ]
     )
 
@@ -28,6 +48,15 @@ def generate_launch_description():
             ],
         )
     )
+    # ld.add_action(
+    #     LifecycleTransition(
+    #         lifecycle_node_names=["microstrain_intertial_node"],
+    #         transition_ids=[
+    #             Transition.TRANSITION_CONFIGURE,
+    #             Transition.TRANSITION_ACTIVATE,
+    #         ],
+    #     )
+    # )
 
     return ld
 
