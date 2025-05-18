@@ -17,3 +17,7 @@ python3 scripts/calibrate_optical.py
 ```
 
 Place the estimated coefficients to `calibration.yml`.
+
+## IMU
+
+TODO
