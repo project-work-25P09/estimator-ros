@@ -37,8 +37,7 @@ class EstimatorNode(Node):
         with open(self.config_calibration_fp, 'r') as f:
             calib = yaml.safe_load(f)
         opt_cfg = calib.get('optical', {})
-        self.optical_x_to_m = opt_cfg.get('x_to_m', 1.0)
-        self.optical_y_to_m = opt_cfg.get('y_to_m', 1.0)
+        self.optical_to_m = opt_cfg.get('x_to_m', 1.0)
 
         with open(self.config_estimation_fp, 'r') as f:
             est_cfg = yaml.safe_load(f)
@@ -65,12 +64,15 @@ class EstimatorNode(Node):
             imu_msg.angular_velocity.y,
             imu_msg.angular_velocity.z,
         ])
+        o = np.array([
+            imu_msg.orientation.x,
+            imu_msg.orientation.y,
+            imu_msg.orientation.z,
+            imu_msg.orientation.w,
+        ])
 
-        self.ekf.predict(a, w)
-        # self.ekf.update_acc_mag(a, mag_vector)
-
+        self.ekf.predict(a, w, o)
         self.publish_estimation()
-
         self.cb_imu_save(imu_msg)
 
     def optical_callback(self, opt_msg: Point):
@@ -92,6 +94,7 @@ class EstimatorNode(Node):
         est.acc_x, est.acc_y, est.acc_z = self.ekf.b_a.tolist()
         est.mag_x, est.mag_y, est.mag_z = 0.0, 0.0, 0.0
         est.mag_strength = 0.0
+        
         # optical‐flow diagnostics
         est.mouse_movement  = 0.0
         est.mouse_speed     = math.hypot(est.x, est.y)
