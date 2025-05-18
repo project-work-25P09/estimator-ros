@@ -18,11 +18,14 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
+# Install directories
 install(DIRECTORY web DESTINATION share/${PROJECT_NAME})
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
+install(DIRECTORY scripts DESTINATION share/${PROJECT_NAME})
+
+# Install executable scripts
 install(PROGRAMS
   "scripts/start_server.py"
-  "scripts/start_server_dash.py"
-  "scripts/start_server_dash_full.py"
   DESTINATION lib/${PROJECT_NAME}
 )
 

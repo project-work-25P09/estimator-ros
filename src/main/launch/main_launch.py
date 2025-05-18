@@ -47,7 +47,7 @@ def generate_launch_description():
         ),
         Node(
             package="server",
-            executable="start_server_dash_full.py",
+            executable="start_server.py",
             name="server_node",
             output="log",
         ),

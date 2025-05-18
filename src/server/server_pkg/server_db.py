@@ -1,0 +1,205 @@
+import json
+import os
+import sqlite3
+from datetime import datetime
+from typing import Dict, List, Any, Optional
+
+# Database path
+DB_PATH = os.path.expanduser("~/estimator-ros/recordings.db")
+
+def init_db():
+    """Initialize the SQLite database for storing measurements"""
+    # Create the database directory if it doesn't exist
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+    
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    
+    # Create recordings table
+    c.execute('''
+    CREATE TABLE IF NOT EXISTS recordings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        timestamp TEXT NOT NULL,
+        description TEXT
+    )
+    ''')
+    
+    # Create measurements table for the actual data
+    c.execute('''
+    CREATE TABLE IF NOT EXISTS measurements (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        recording_id INTEGER,
+        data_type TEXT NOT NULL,
+        data_json TEXT NOT NULL,
+        FOREIGN KEY (recording_id) REFERENCES recordings (id)
+    )
+    ''')
+    
+    conn.commit()
+    conn.close()
+
+def save_recording(name: str, data: Dict[str, List[Any]], description: str = "") -> Dict[str, Any]:
+    """Save a recording to the database"""
+    try:
+        if not name:
+            name = f"recording_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            
+        # Initialize db connection
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        
+        # Insert the recording entry
+        c.execute(
+            "INSERT INTO recordings (name, timestamp, description) VALUES (?, ?, ?)",
+            (name, datetime.now().isoformat(), description)
+        )
+        recording_id = c.lastrowid
+        
+        # Insert measurement data by type
+        for data_type, data_items in data.items():
+            if data_items:  # Only insert if we have data
+                c.execute(
+                    "INSERT INTO measurements (recording_id, data_type, data_json) VALUES (?, ?, ?)",
+                    (recording_id, data_type, json.dumps(data_items))
+                )
+        
+        conn.commit()
+        conn.close()
+        
+        return {"success": True, "id": recording_id, "name": name}
+    
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+def list_recordings() -> Dict[str, Any]:
+    """List all available recordings"""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row  # Enable row factory to get dict-like results
+        c = conn.cursor()
+        
+        c.execute("SELECT id, name, timestamp, description FROM recordings ORDER BY timestamp DESC")
+        recordings = [dict(row) for row in c.fetchall()]
+        
+        conn.close()
+        
+        # Format timestamps for display
+        for recording in recordings:
+            try:
+                timestamp = datetime.fromisoformat(recording["timestamp"])
+                recording["date"] = timestamp.strftime("%Y-%m-%d %H:%M:%S")
+            except:
+                recording["date"] = recording["timestamp"]
+        
+        return {"success": True, "recordings": recordings}
+    
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+def get_recording(recording_id: int) -> Dict[str, Any]:
+    """Get a specific recording by ID"""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        
+        # Get recording metadata
+        c.execute("SELECT id, name, timestamp, description FROM recordings WHERE id = ?", (recording_id,))
+        recording_row = c.fetchone()
+        
+        if not recording_row:
+            return {"success": False, "error": f"Recording with ID {recording_id} not found"}
+            
+        recording = dict(recording_row)
+        
+        # Get measurement data
+        c.execute("SELECT data_type, data_json FROM measurements WHERE recording_id = ?", (recording_id,))
+        measurements = c.fetchall()
+        
+        # Organize data by type
+        recording_data = {}
+        for data_type, data_json in measurements:
+            recording_data[data_type] = json.loads(data_json)
+        
+        recording["data"] = recording_data
+        
+        conn.close()
+        
+        return {"success": True, "recording": recording}
+    
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+def delete_recording(recording_id: int) -> Dict[str, Any]:
+    """Delete a recording by ID"""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        
+        # First delete associated measurements
+        c.execute("DELETE FROM measurements WHERE recording_id = ?", (recording_id,))
+        
+        # Then delete the recording itself
+        c.execute("DELETE FROM recordings WHERE id = ?", (recording_id,))
+        
+        conn.commit()
+        conn.close()
+        
+        return {"success": True, "message": f"Recording with ID {recording_id} deleted"}
+    
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+def compare_recordings(recording_id1: int, recording_id2: int) -> Dict[str, Any]:
+    """Compare two recordings and return statistics"""
+    try:
+        rec1 = get_recording(recording_id1)
+        rec2 = get_recording(recording_id2)
+        
+        if not rec1["success"] or not rec2["success"]:
+            return {"success": False, "error": "One or both recordings not found"}
+            
+        rec1_data = rec1["recording"]["data"]
+        rec2_data = rec2["recording"]["data"]
+        
+        comparison = {
+            "recording1": {
+                "id": recording_id1,
+                "name": rec1["recording"]["name"]
+            },
+            "recording2": {
+                "id": recording_id2,
+                "name": rec2["recording"]["name"]
+            },
+            "metrics": {}
+        }
+        
+        # Compare position data if available
+        if "position" in rec1_data and "position" in rec2_data:
+            # Calculate statistics (example: average distance between positions)
+            # This is a simplistic example - real implementation would need more sophisticated metrics
+            positions1 = rec1_data["position"]
+            positions2 = rec2_data["position"]
+            
+            min_len = min(len(positions1), len(positions2))
+            
+            # Simple Euclidean distance between corresponding points
+            total_distance = 0
+            for i in range(min_len):
+                p1 = positions1[i]
+                p2 = positions2[i]
+                distance = ((p1["x"] - p2["x"])**2 + (p1["y"] - p2["y"])**2 + (p1["z"] - p2["z"])**2)**0.5
+                total_distance += distance
+                
+            avg_distance = total_distance / min_len if min_len > 0 else 0
+            
+            comparison["metrics"]["position"] = {
+                "avg_distance": avg_distance,
+                "points_compared": min_len
+            }
+        
+        return {"success": True, "comparison": comparison}
+    
+    except Exception as e:
+        return {"success": False, "error": str(e)}
