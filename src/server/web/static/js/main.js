@@ -269,60 +269,6 @@ function initCharts() {
         plot_bgcolor: 'rgba(0, 0, 30, 0.8)',
         font: { color: 'white' }
     }, { responsive: true });
-    
-    // Initialize hardware monitor plot
-    charts.hardware = new Plotly.newPlot('hardware-plot', [{
-        type: 'scatter',
-        mode: 'lines',
-        x: [],
-        y: [],
-        name: 'CPU Usage',
-        line: { color: 'red', width: 2 }
-    }, {
-        type: 'scatter',
-        mode: 'lines',
-        x: [],
-        y: [],
-        name: 'Memory (MB)',
-        line: { color: 'green', width: 2 },
-        yaxis: 'y2'
-    }, {
-        type: 'scatter',
-        mode: 'lines',
-        x: [],
-        y: [],
-        name: 'Temperature (°C)',
-        line: { color: 'orange', width: 2 },
-        yaxis: 'y3'
-    }], {
-        title: 'Hardware Monitor Data',
-        xaxis: { title: 'Time' },
-        yaxis: { title: 'CPU Usage (%)' },
-        yaxis2: {
-            title: 'Memory (MB)',
-            overlaying: 'y',
-            side: 'right',
-            showgrid: false
-        },
-        yaxis3: {
-            title: 'Temperature (°C)',
-            overlaying: 'y',
-            side: 'right',
-            position: 0.85,
-            showgrid: false
-        },
-        legend: {
-            orientation: 'h',
-            yanchor: 'bottom',
-            y: 1.02,
-            xanchor: 'right',
-            x: 1
-        },
-        margin: { l: 50, r: 50, b: 50, t: 50 },
-        paper_bgcolor: 'rgba(0, 0, 0, 0.8)',
-        plot_bgcolor: 'rgba(0, 0, 30, 0.8)',
-        font: { color: 'white' }
-    }, { responsive: true });
 }
 
 function updateCharts(data) {
@@ -374,13 +320,6 @@ function updateCharts(data) {
     
     // Hardware monitor data update (if available)
     if (data.hw_cpu_usage !== undefined) {
-        const hardwareUpdate = {
-            x: [[measurementData.hardware.length], [measurementData.hardware.length], [measurementData.hardware.length]],
-            y: [[data.hw_cpu_usage], [data.hw_memory_mb], [data.hw_temperature]]
-        };
-        
-        Plotly.extendTraces('hardware-plot', hardwareUpdate, [0, 1, 2], 100);
-        
         // Update hardware monitor numeric displays
         document.getElementById('hw-cpu-usage').textContent = `${data.hw_cpu_usage.toFixed(2)}%`;
         document.getElementById('hw-memory').textContent = `${data.hw_memory_mb.toFixed(2)} MB`;
@@ -500,14 +439,6 @@ function setupEventListeners() {
             { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Direction', line: { color: 'green', width: 2 } },
             { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Speed', line: { color: 'red', width: 2 }, yaxis: 'y2' },
             { type: 'bar', x: [], y: [], name: 'Distance', marker: { color: 'blue' }, opacity: 0.1, yaxis: 'y2' }
-        ]);
-        
-        // Reset hardware monitor plot
-        Plotly.deleteTraces('hardware-plot', [0, 1, 2]);
-        Plotly.addTraces('hardware-plot', [
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'CPU Usage', line: { color: 'red', width: 2 } },
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Memory (MB)', line: { color: 'green', width: 2 }, yaxis: 'y2' },
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Temperature (°C)', line: { color: 'orange', width: 2 }, yaxis: 'y3' }
         ]);
     });
     
