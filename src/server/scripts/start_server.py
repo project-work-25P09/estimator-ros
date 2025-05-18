@@ -37,8 +37,12 @@ class EstimationListener(Node):
     def listener_callback(self, msg):
         global data_ros, data_ros_lock
         with data_ros_lock:
+            # Convert ROS timestamp to seconds (for plotting)
+            timestamp_sec = msg.stamp.sec + (msg.stamp.nanosec / 1e9)
+            
             # Store the latest data
             data_ros.append((
+                timestamp_sec,
                 msg.x, msg.y, msg.z, msg.yaw, msg.pitch, msg.roll, 
                 msg.acc_x, msg.acc_y, msg.acc_z, msg.acc_yaw, msg.acc_pitch, msg.acc_roll, 
                 msg.mag_x, msg.mag_y, msg.mag_z, msg.mag_strength, 
@@ -180,26 +184,27 @@ def get_latest_data():
         hw_data = api.dashboard_ros.get_latest_hw_data() if api and api.dashboard_ros else None
         
         data = {
-            "x": latest[0],
-            "y": latest[1],
-            "z": latest[2],
-            "yaw": latest[3],
-            "pitch": latest[4],
-            "roll": latest[5],
-            "acc_x": latest[6],
-            "acc_y": latest[7],
-            "acc_z": latest[8],
-            "acc_yaw": latest[9],
-            "acc_pitch": latest[10],
-            "acc_roll": latest[11],
-            "mag_x": latest[12],
-            "mag_y": latest[13],
-            "mag_z": latest[14],
-            "mag_strength": latest[15],
-            "mouse_movement": latest[16],
-            "mouse_speed": latest[17],
-            "mouse_direction": latest[18],
-            "mouse_distance": latest[19]
+            "timestamp": latest[0],  # ROS timestamp in seconds
+            "x": latest[1],
+            "y": latest[2],
+            "z": latest[3],
+            "yaw": latest[4],
+            "pitch": latest[5],
+            "roll": latest[6],
+            "acc_x": latest[7],
+            "acc_y": latest[8],
+            "acc_z": latest[9],
+            "acc_yaw": latest[10],
+            "acc_pitch": latest[11],
+            "acc_roll": latest[12],
+            "mag_x": latest[13],
+            "mag_y": latest[14],
+            "mag_z": latest[15],
+            "mag_strength": latest[16],
+            "mouse_movement": latest[17],
+            "mouse_speed": latest[18],
+            "mouse_direction": latest[19],
+            "mouse_distance": latest[20]
         }
         
         # Add hardware monitor data if available

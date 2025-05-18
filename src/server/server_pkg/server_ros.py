@@ -28,7 +28,11 @@ class ServerROS(Node):
     
     def estimation_callback(self, msg):
         """Store the latest estimation data"""
+        # Convert ROS timestamp to seconds (for plotting)
+        timestamp_sec = msg.stamp.sec + (msg.stamp.nanosec / 1e9)
+        
         self.latest_data = {
+            "timestamp": timestamp_sec,
             "x": msg.x,
             "y": msg.y,
             "z": msg.z,

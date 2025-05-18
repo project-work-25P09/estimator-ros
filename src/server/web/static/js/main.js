@@ -130,7 +130,7 @@ function initCharts() {
         line: { color: '#58a6ff', width: 2 }
     }], {
         xaxis: { 
-            title: 'Time',
+            title: 'Time (seconds)',
             gridcolor: '#30363d',
             zerolinecolor: '#8b949e' 
         },
@@ -176,7 +176,7 @@ function initCharts() {
         line: { color: '#58a6ff', width: 2 }
     }], {
         xaxis: { 
-            title: 'Time',
+            title: 'Time (seconds)',
             gridcolor: '#30363d',
             zerolinecolor: '#8b949e' 
         },
@@ -230,7 +230,7 @@ function initCharts() {
         yaxis: 'y2'
     }], {
         xaxis: { 
-            title: 'Time',
+            title: 'Time (seconds)',
             gridcolor: '#30363d',
             zerolinecolor: '#8b949e' 
         },
@@ -325,7 +325,7 @@ function updateCharts(data) {
     
     // Orientation data update
     const orientationUpdate = {
-        x: [[measurementData.orientation.length], [measurementData.orientation.length], [measurementData.orientation.length]],
+        x: [[data.timestamp], [data.timestamp], [data.timestamp]],
         y: [[data.roll], [data.pitch], [data.yaw]]
     };
     
@@ -333,7 +333,7 @@ function updateCharts(data) {
     
     // Acceleration data update
     const accelerationUpdate = {
-        x: [[measurementData.acceleration.length], [measurementData.acceleration.length], [measurementData.acceleration.length]],
+        x: [[data.timestamp], [data.timestamp], [data.timestamp]],
         y: [[data.acc_x], [data.acc_y], [data.acc_z]]
     };
     
@@ -341,7 +341,7 @@ function updateCharts(data) {
     
     // Magnetometer data update
     const magnetometerUpdate = {
-        x: [[measurementData.magnetometer.length], [measurementData.magnetometer.length], [measurementData.magnetometer.length], [measurementData.magnetometer.length]],
+        x: [[data.timestamp], [data.timestamp], [data.timestamp], [data.timestamp]],
         y: [[data.mag_x], [data.mag_y], [data.mag_z], [data.mag_strength]]
     };
     
@@ -349,7 +349,7 @@ function updateCharts(data) {
     
     // Mouse data update
     const mouseUpdate = {
-        x: [[measurementData.mouse.length], [measurementData.mouse.length], [measurementData.mouse.length]],
+        x: [[data.timestamp], [data.timestamp], [data.timestamp]],
         y: [[data.mouse_direction], [data.mouse_speed], [data.mouse_distance]]
     };
     
@@ -422,7 +422,7 @@ function updateDataStore(data) {
             x: data.x,
             y: data.y,
             z: data.z,
-            timestamp: new Date().toISOString()
+            timestamp: data.timestamp
         });
         
         // Store orientation data
@@ -430,7 +430,7 @@ function updateDataStore(data) {
             roll: data.roll,
             pitch: data.pitch,
             yaw: data.yaw,
-            timestamp: new Date().toISOString()
+            timestamp: data.timestamp
         });
         
         // Store acceleration data
@@ -438,7 +438,7 @@ function updateDataStore(data) {
             x: data.acc_x,
             y: data.acc_y,
             z: data.acc_z,
-            timestamp: new Date().toISOString()
+            timestamp: data.timestamp
         });
         
         // Store magnetometer data
@@ -447,7 +447,7 @@ function updateDataStore(data) {
             y: data.mag_y,
             z: data.mag_z,
             field: data.mag_strength,
-            timestamp: new Date().toISOString()
+            timestamp: data.timestamp
         });
         
         // Store mouse data
@@ -456,7 +456,7 @@ function updateDataStore(data) {
             speed: data.mouse_speed,
             direction: data.mouse_direction,
             distance: data.mouse_distance,
-            timestamp: new Date().toISOString()
+            timestamp: data.timestamp
         });
         
         // Store hardware monitor data if available
@@ -470,7 +470,7 @@ function updateDataStore(data) {
                 network_tx_mb: data.hw_network_tx_mb,
                 power_consumption: data.hw_power_consumption,
                 temperature: data.hw_temperature,
-                timestamp: new Date().toISOString()
+                timestamp: data.timestamp
             });
         }
     }
