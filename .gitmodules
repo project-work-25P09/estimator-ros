@@ -4,4 +4,4 @@
 	branch = ros2
 [submodule "src/rpi-hardware-monitor-ros"]
 	path = src/rpi-hardware-monitor-ros
-	url = git@hwmon:project-work-25P09/rpi-hardware-monitor-ros.git
+	url = https://github.com/project-work-25P09/rpi-hardware-monitor-ros.git

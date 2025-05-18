@@ -3,14 +3,163 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Trajectory Estimation Control Panel</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
   <link rel="stylesheet" href="/static/css/base.css">
   <link rel="stylesheet" href="/static/css/layout.css">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 
 <body>
-  <h1>Initial template</h1>
-  <script type="module" src="/static/main.js"></script>
+  <div class="container">
+    <header>
+      <h1>Trajectory Estimation Control Panel</h1>
+      <div class="status">
+        <span class="status-indicator" id="connection-status-indicator"></span>
+        <span id="connection-status">Disconnected</span>
+      </div>
+    </header>
+
+    <div class="controls">
+      <select id="interval-dropdown">
+        <option value="50">Interval 50 ms</option>
+        <option value="100">Interval 100 ms</option>
+        <option value="200">Interval 200 ms</option>
+        <option value="500">Interval 500 ms</option>
+        <option value="1000" selected>Interval 1000 ms</option>
+        <option value="2000">Interval 2000 ms</option>
+      </select>
+      <button id="pause-button">Pause</button>
+      <button id="reset-button">Reset</button>
+      <button id="record-button">Start Recording</button>
+      <button id="load-button">Load Recording</button>
+    </div>
+
+    <div class="plot-container full-width">
+      <h3>Position Tracking (3D)</h3>
+      <div id="position-plot" style="height: 500px;"></div>
+      <div class="data-display">
+        <div class="data-value">
+          <strong>X:</strong>
+          <span id="position-x">0.0000</span>
+        </div>
+        <div class="data-value">
+          <strong>Y:</strong>
+          <span id="position-y">0.0000</span>
+        </div>
+        <div class="data-value">
+          <strong>Z:</strong>
+          <span id="position-z">0.0000</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="plot-grid">
+      <div class="plot-container">
+        <h3>Orientation</h3>
+        <div id="orientation-plot" style="height: 400px;"></div>
+        <div class="data-display">
+          <div class="data-value">
+            <strong>Roll:</strong>
+            <span id="orientation-roll">0.0000 rad (0.0°)</span>
+          </div>
+          <div class="data-value">
+            <strong>Pitch:</strong>
+            <span id="orientation-pitch">0.0000 rad (0.0°)</span>
+          </div>
+          <div class="data-value">
+            <strong>Yaw:</strong>
+            <span id="orientation-yaw">0.0000 rad (0.0°)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="plot-container">
+        <h3>Acceleration</h3>
+        <div id="acceleration-plot" style="height: 400px;"></div>
+        <div class="data-display">
+          <div class="data-value">
+            <strong>X:</strong>
+            <span id="acceleration-x">0.0000 m/s²</span>
+          </div>
+          <div class="data-value">
+            <strong>Y:</strong>
+            <span id="acceleration-y">0.0000 m/s²</span>
+          </div>
+          <div class="data-value">
+            <strong>Z:</strong>
+            <span id="acceleration-z">0.0000 m/s²</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="plot-container">
+        <h3>Magnetometer</h3>
+        <div id="magnetometer-plot" style="height: 400px;"></div>
+        <div class="data-display">
+          <div class="data-value">
+            <strong>X:</strong>
+            <span id="magnetometer-x">0.0000 m/s²</span>
+          </div>
+          <div class="data-value">
+            <strong>Y:</strong>
+            <span id="magnetometer-y">0.0000 m/s²</span>
+          </div>
+          <div class="data-value">
+            <strong>Z:</strong>
+            <span id="magnetometer-z">0.0000 m/s²</span>
+          </div>
+          <div class="data-value">
+            <strong>Field:</strong>
+            <span id="magnetometer-field">0.0000</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="plot-container">
+        <h3>Mouse Movement</h3>
+        <div id="mouse-plot" style="height: 400px;"></div>
+        <div class="data-display">
+          <div class="data-value">
+            <strong>Speed:</strong>
+            <span id="mouse-speed">0.0000</span>
+          </div>
+          <div class="data-value">
+            <strong>Direction:</strong>
+            <span id="mouse-direction">0.0000°</span>
+          </div>
+          <div class="data-value">
+            <strong>Distance:</strong>
+            <span id="mouse-distance">0.0000</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load Recording Dialog -->
+  <div id="load-dialog" class="dialog">
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <h3>Load Recording</h3>
+        <button id="close-dialog" class="close-button">&times;</button>
+      </div>
+      <div class="dialog-body">
+        <div>
+          <label for="recording-select">Select Recording:</label>
+          <select id="recording-select" style="width: 100%; margin-top: 10px;">
+            <option value="">Loading recordings...</option>
+          </select>
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <button id="load-recording-btn">Load</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/js/main.js"></script>
 </body>
 
 </html>
