@@ -14,7 +14,9 @@ class OpticalSensorNode(LifecycleNode):
         self.device = None
         self.publisher_ = None
         self.thread = None
+        self.zero_timer = None
         self._stop_event = threading.Event()
+        self.idle_timer_period = 1.0/20.0
 
     def on_configure(self, state: State) -> TransitionCallbackReturn:
         self.get_logger().info('Configuring...')
@@ -40,6 +42,7 @@ class OpticalSensorNode(LifecycleNode):
             target=self.read_device_events, daemon=True
         )
         self.thread.start()
+        self.zero_timer = self.create_timer(self.idle_timer_period, self.publish_zero_point)
         return super().on_activate(state)
 
     def on_deactivate(self, state: State) -> TransitionCallbackReturn:
@@ -47,6 +50,9 @@ class OpticalSensorNode(LifecycleNode):
         self._stop_event.set()
         if self.thread is not None:
             self.thread.join(timeout=1.0)
+        if self.zero_timer is not None:
+            self.destroy_timer(self.zero_timer)
+            self.zero_timer = None
         return super().on_deactivate(state)
 
     def on_cleanup(self, state: State) -> TransitionCallbackReturn:
@@ -54,6 +60,9 @@ class OpticalSensorNode(LifecycleNode):
         self._stop_event.set()
         if self.thread is not None:
             self.thread.join(timeout=1.0)
+        if self.zero_timer is not None:
+            self.destroy_timer(self.zero_timer)
+            self.zero_timer = None
         if self.device is not None:
             self.device.close()
             self.device = None
@@ -85,6 +94,14 @@ class OpticalSensorNode(LifecycleNode):
                 point.z = 0.0
                 self.publisher_.publish(point)
         self.get_logger().info('Event-reading thread stopped.')
+
+    def publish_zero_point(self):
+        zero_point = Point()
+        zero_point.x = 0.0
+        zero_point.y = 0.0
+        zero_point.z = 0.0
+        self.publisher_.publish(zero_point)
+
 
 def main(args=None):
     rclpy.init(args=args)
