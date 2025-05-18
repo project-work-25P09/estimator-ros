@@ -2,3 +2,12 @@ microstrain_inertial_driver:
   ros__parameters:
     port: /dev/imu
     baudrate: 115200
+
+    data_packet_rate: 100
+    filter_enable_attitude: true
+    raw_file_enable: false
+    raw_file_directory: "/tmp"
+
+    imu_data_raw_rate: 100
+    imu_mag_data_rate: 100
+    imu_data_rate: 0
