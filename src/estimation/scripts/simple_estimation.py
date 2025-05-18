@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
+from builtin_interfaces.msg import Time
 from geometry_msgs.msg import Point
 from sensor_msgs.msg import Imu, MagneticField
 from estimation.msg import Estimation
@@ -86,6 +87,7 @@ class EstimatorNode(Node):
 
     def publish_estimation(self):
         est = Estimation()
+        est.stamp = self.get_clock().now().to_msg()
 
         est.x, est.y, est.z = self.ekf.p.tolist()
         roll, pitch, yaw = quaternion_to_euler(self.ekf.q)
