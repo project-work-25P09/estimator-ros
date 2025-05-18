@@ -70,26 +70,40 @@ function initCharts() {
         y: [],
         z: [],
         marker: {
-            size: 3,
-            color: 'blue',
+            size: 4,
+            color: '#58a6ff',
+            opacity: 0.8
         },
         line: {
-            width: 2,
-            color: 'blue',
+            width: 3,
+            color: '#58a6ff',
+            opacity: 0.7
         },
         name: 'Current Trajectory'
     }], {
         scene: {
-            xaxis: { title: 'X Axis' },
-            yaxis: { title: 'Y Axis' },
-            zaxis: { title: 'Z Axis' },
+            xaxis: { 
+                title: 'X Axis',
+                gridcolor: '#30363d',
+                zerolinecolor: '#58a6ff'
+            },
+            yaxis: { 
+                title: 'Y Axis',
+                gridcolor: '#30363d',
+                zerolinecolor: '#58a6ff'
+            },
+            zaxis: { 
+                title: 'Z Axis',
+                gridcolor: '#30363d',
+                zerolinecolor: '#58a6ff'
+            },
             aspectmode: 'cube',
             camera: { eye: { x: 1.9, y: 0.7, z: 0.1 } }
         },
         margin: { l: 0, r: 0, b: 0, t: 0 },
-        paper_bgcolor: 'rgba(0, 0, 0, 0.8)',
-        plot_bgcolor: 'rgba(0, 0, 30, 0.8)',
-        font: { color: 'white' }
+        paper_bgcolor: 'rgba(0, 0, 0, 0)',
+        plot_bgcolor: 'rgba(0, 0, 0, 0)',
+        font: { color: '#f0f6fc' }
     }, { responsive: true });
     
     // Orientation plot
@@ -99,25 +113,32 @@ function initCharts() {
         x: [],
         y: [],
         name: 'Roll',
-        line: { color: 'red', width: 2 }
+        line: { color: '#f85149', width: 2 }
     }, {
         type: 'scatter',
         mode: 'lines',
         x: [],
         y: [],
         name: 'Pitch',
-        line: { color: 'green', width: 2 }
+        line: { color: '#238636', width: 2 }
     }, {
         type: 'scatter',
         mode: 'lines',
         x: [],
         y: [],
         name: 'Yaw',
-        line: { color: 'blue', width: 2 }
+        line: { color: '#58a6ff', width: 2 }
     }], {
-        title: 'Orientation Data',
-        xaxis: { title: 'Time' },
-        yaxis: { title: 'Value (radians)' },
+        xaxis: { 
+            title: 'Time',
+            gridcolor: '#30363d',
+            zerolinecolor: '#8b949e' 
+        },
+        yaxis: { 
+            title: 'Value (radians)',
+            gridcolor: '#30363d',
+            zerolinecolor: '#8b949e' 
+        },
         legend: {
             orientation: 'h',
             yanchor: 'bottom',
@@ -125,10 +146,10 @@ function initCharts() {
             xanchor: 'right',
             x: 1
         },
-        margin: { l: 50, r: 20, b: 50, t: 50 },
-        paper_bgcolor: 'rgba(0, 0, 0, 0.8)',
-        plot_bgcolor: 'rgba(0, 0, 30, 0.8)',
-        font: { color: 'white' }
+        margin: { l: 50, r: 20, b: 50, t: 20 },
+        paper_bgcolor: 'rgba(0, 0, 0, 0)',
+        plot_bgcolor: 'rgba(0, 0, 0, 0)',
+        font: { color: '#f0f6fc' }
     }, { responsive: true });
     
     // Acceleration plot
@@ -138,25 +159,32 @@ function initCharts() {
         x: [],
         y: [],
         name: 'Acc X',
-        line: { color: 'red', width: 2 }
+        line: { color: '#f85149', width: 2 }
     }, {
         type: 'scatter',
         mode: 'lines',
         x: [],
         y: [],
         name: 'Acc Y',
-        line: { color: 'green', width: 2 }
+        line: { color: '#238636', width: 2 }
     }, {
         type: 'scatter',
         mode: 'lines',
         x: [],
         y: [],
         name: 'Acc Z',
-        line: { color: 'blue', width: 2 }
+        line: { color: '#58a6ff', width: 2 }
     }], {
-        title: 'Acceleration Data',
-        xaxis: { title: 'Time' },
-        yaxis: { title: 'Acceleration (m/s²)' },
+        xaxis: { 
+            title: 'Time',
+            gridcolor: '#30363d',
+            zerolinecolor: '#8b949e' 
+        },
+        yaxis: { 
+            title: 'Acceleration (m/s²)',
+            gridcolor: '#30363d',
+            zerolinecolor: '#8b949e' 
+        },
         legend: {
             orientation: 'h',
             yanchor: 'bottom',
@@ -164,10 +192,10 @@ function initCharts() {
             xanchor: 'right',
             x: 1
         },
-        margin: { l: 50, r: 20, b: 50, t: 50 },
-        paper_bgcolor: 'rgba(0, 0, 0, 0.8)',
-        plot_bgcolor: 'rgba(0, 0, 30, 0.8)',
-        font: { color: 'white' }
+        margin: { l: 50, r: 20, b: 50, t: 20 },
+        paper_bgcolor: 'rgba(0, 0, 0, 0)',
+        plot_bgcolor: 'rgba(0, 0, 0, 0)',
+        font: { color: '#f0f6fc' }
     }, { responsive: true });
     
     // Magnetometer plot
@@ -177,33 +205,40 @@ function initCharts() {
         x: [],
         y: [],
         name: 'Mag X',
-        line: { color: 'red', width: 2 }
+        line: { color: '#f85149', width: 2 }
     }, {
         type: 'scatter',
         mode: 'lines',
         x: [],
         y: [],
         name: 'Mag Y',
-        line: { color: 'green', width: 2 }
+        line: { color: '#238636', width: 2 }
     }, {
         type: 'scatter',
         mode: 'lines',
         x: [],
         y: [],
         name: 'Mag Z',
-        line: { color: 'blue', width: 2 }
+        line: { color: '#58a6ff', width: 2 }
     }, {
         type: 'bar',
         x: [],
         y: [],
         name: 'Field',
-        marker: { color: 'purple' },
-        opacity: 0.3,
+        marker: { color: '#e3b341' },
+        opacity: 0.4,
         yaxis: 'y2'
     }], {
-        title: 'Magnetometer Data',
-        xaxis: { title: 'Time' },
-        yaxis: { title: 'Value' },
+        xaxis: { 
+            title: 'Time',
+            gridcolor: '#30363d',
+            zerolinecolor: '#8b949e' 
+        },
+        yaxis: { 
+            title: 'Value (μT)',
+            gridcolor: '#30363d',
+            zerolinecolor: '#8b949e' 
+        },
         yaxis2: {
             title: 'Field Strength',
             overlaying: 'y',
@@ -217,10 +252,10 @@ function initCharts() {
             xanchor: 'right',
             x: 1
         },
-        margin: { l: 50, r: 50, b: 50, t: 50 },
-        paper_bgcolor: 'rgba(0, 0, 0, 0.8)',
-        plot_bgcolor: 'rgba(0, 0, 30, 0.8)',
-        font: { color: 'white' }
+        margin: { l: 50, r: 50, b: 50, t: 20 },
+        paper_bgcolor: 'rgba(0, 0, 0, 0)',
+        plot_bgcolor: 'rgba(0, 0, 0, 0)',
+        font: { color: '#f0f6fc' }
     }, { responsive: true });
     
     // Initialize mouse plot
@@ -230,27 +265,34 @@ function initCharts() {
         x: [],
         y: [],
         name: 'Direction',
-        line: { color: 'green', width: 2 }
+        line: { color: '#238636', width: 2 }
     }, {
         type: 'scatter',
         mode: 'lines',
         x: [],
         y: [],
         name: 'Speed',
-        line: { color: 'red', width: 2 },
+        line: { color: '#f85149', width: 2 },
         yaxis: 'y2'
     }, {
         type: 'bar',
         x: [],
         y: [],
         name: 'Distance',
-        marker: { color: 'blue' },
-        opacity: 0.1,
+        marker: { color: '#58a6ff' },
+        opacity: 0.2,
         yaxis: 'y2'
     }], {
-        title: 'Mouse Movement Data',
-        xaxis: { title: 'Time' },
-        yaxis: { title: 'Direction (deg)' },
+        xaxis: { 
+            title: 'Time',
+            gridcolor: '#30363d',
+            zerolinecolor: '#8b949e' 
+        },
+        yaxis: { 
+            title: 'Direction (deg)',
+            gridcolor: '#30363d',
+            zerolinecolor: '#8b949e'
+        },
         yaxis2: {
             title: 'Speed (m/s) & Distance (m)',
             overlaying: 'y',
@@ -264,10 +306,10 @@ function initCharts() {
             xanchor: 'right',
             x: 1
         },
-        margin: { l: 50, r: 50, b: 50, t: 50 },
-        paper_bgcolor: 'rgba(0, 0, 0, 0.8)',
-        plot_bgcolor: 'rgba(0, 0, 30, 0.8)',
-        font: { color: 'white' }
+        margin: { l: 50, r: 50, b: 50, t: 20 },
+        paper_bgcolor: 'rgba(0, 0, 0, 0)',
+        plot_bgcolor: 'rgba(0, 0, 0, 0)',
+        font: { color: '#f0f6fc' }
     }, { responsive: true });
 }
 
@@ -320,11 +362,55 @@ function updateCharts(data) {
     
     // Hardware monitor data update (if available)
     if (data.hw_cpu_usage !== undefined) {
-        // Update hardware monitor numeric displays
-        document.getElementById('hw-cpu-usage').textContent = `${data.hw_cpu_usage.toFixed(2)}%`;
-        document.getElementById('hw-memory').textContent = `${data.hw_memory_mb.toFixed(2)} MB`;
-        document.getElementById('hw-temperature').textContent = `${data.hw_temperature.toFixed(2)}°C`;
-        document.getElementById('hw-network').textContent = `↓${data.hw_network_rx_mb.toFixed(2)} MB/s ↑${data.hw_network_tx_mb.toFixed(2)} MB/s`;
+        // Update hardware monitor numeric displays with animations
+        updateHardwareValue('hw-cpu-usage', `${data.hw_cpu_usage.toFixed(2)}%`, data.hw_cpu_usage);
+        updateHardwareValue('hw-memory', `${data.hw_memory_mb.toFixed(2)} MB`, data.hw_memory_mb / 1000); // Normalize for animation
+        updateHardwareValue('hw-temperature', `${data.hw_temperature.toFixed(2)}°C`, data.hw_temperature / 100); // Normalize for animation
+        updateHardwareValue('hw-network', `↓${data.hw_network_rx_mb.toFixed(2)} MB/s ↑${data.hw_network_tx_mb.toFixed(2)} MB/s`, 
+            (data.hw_network_rx_mb + data.hw_network_tx_mb) / 10); // Combined for animation
+    }
+}
+
+// Function to update hardware values with animations
+function updateHardwareValue(elementId, text, value) {
+    const element = document.getElementById(elementId);
+    const parent = element.closest('.hw-monitor-value');
+    
+    // Set the new value
+    element.textContent = text;
+    
+    // Add visual feedback based on value changes
+    if (element.dataset.prevValue !== undefined) {
+        const prevValue = parseFloat(element.dataset.prevValue);
+        if (value > prevValue) {
+            parent.classList.add('value-increase');
+            setTimeout(() => parent.classList.remove('value-increase'), 1000);
+        } else if (value < prevValue) {
+            parent.classList.add('value-decrease');
+            setTimeout(() => parent.classList.remove('value-decrease'), 1000);
+        }
+    }
+    
+    // Store current value for next comparison
+    element.dataset.prevValue = value;
+    
+    // Apply color based on threshold for certain metrics
+    if (elementId === 'hw-cpu-usage') {
+        if (value > 80) {
+            element.style.color = 'var(--error-color)';
+        } else if (value > 50) {
+            element.style.color = 'var(--warning-color)';
+        } else {
+            element.style.color = 'var(--success-color)';
+        }
+    } else if (elementId === 'hw-temperature') {
+        if (value * 100 > 75) {
+            element.style.color = 'var(--error-color)';
+        } else if (value * 100 > 60) {
+            element.style.color = 'var(--warning-color)';
+        } else {
+            element.style.color = 'var(--success-color)';
+        }
     }
 }
 
@@ -391,10 +477,18 @@ function updateDataStore(data) {
 }
 
 function setupEventListeners() {
+    // Initialize theme from local storage or default to dark
+    initializeTheme();
+    
+    // Theme toggle button
+    document.getElementById('theme-toggle').addEventListener('click', function() {
+        toggleTheme();
+    });
+    
     // Pause/Continue button
     document.getElementById('pause-button').addEventListener('click', function() {
         isPaused = !isPaused;
-        this.textContent = isPaused ? 'Continue' : 'Pause';
+        this.innerHTML = isPaused ? '<i class="bi bi-play-fill"></i> Continue' : '<i class="bi bi-pause-fill"></i> Pause';
     });
     
     // Reset button
@@ -407,45 +501,47 @@ function setupEventListeners() {
             x: [],
             y: [],
             z: [],
-            marker: { size: 3, color: 'blue' },
-            line: { width: 2, color: 'blue' },
+            marker: { size: 4, color: '#58a6ff', opacity: 0.8 },
+            line: { width: 3, color: '#58a6ff', opacity: 0.7 },
             name: 'Current Trajectory'
         });
         
         Plotly.deleteTraces('orientation-plot', [0, 1, 2]);
         Plotly.addTraces('orientation-plot', [
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Roll', line: { color: 'red', width: 2 } },
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Pitch', line: { color: 'green', width: 2 } },
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Yaw', line: { color: 'blue', width: 2 } }
+            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Roll', line: { color: '#f85149', width: 2 } },
+            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Pitch', line: { color: '#238636', width: 2 } },
+            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Yaw', line: { color: '#58a6ff', width: 2 } }
         ]);
         
         Plotly.deleteTraces('acceleration-plot', [0, 1, 2]);
         Plotly.addTraces('acceleration-plot', [
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Acc X', line: { color: 'red', width: 2 } },
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Acc Y', line: { color: 'green', width: 2 } },
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Acc Z', line: { color: 'blue', width: 2 } }
+            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Acc X', line: { color: '#f85149', width: 2 } },
+            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Acc Y', line: { color: '#238636', width: 2 } },
+            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Acc Z', line: { color: '#58a6ff', width: 2 } }
         ]);
         
         Plotly.deleteTraces('magnetometer-plot', [0, 1, 2, 3]);
         Plotly.addTraces('magnetometer-plot', [
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Mag X', line: { color: 'red', width: 2 } },
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Mag Y', line: { color: 'green', width: 2 } },
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Mag Z', line: { color: 'blue', width: 2 } },
-            { type: 'bar', x: [], y: [], name: 'Field', marker: { color: 'purple' }, opacity: 0.3, yaxis: 'y2' }
+            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Mag X', line: { color: '#f85149', width: 2 } },
+            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Mag Y', line: { color: '#238636', width: 2 } },
+            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Mag Z', line: { color: '#58a6ff', width: 2 } },
+            { type: 'bar', x: [], y: [], name: 'Field', marker: { color: '#e3b341' }, opacity: 0.4, yaxis: 'y2' }
         ]);
         
         Plotly.deleteTraces('mouse-plot', [0, 1, 2]);
         Plotly.addTraces('mouse-plot', [
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Direction', line: { color: 'green', width: 2 } },
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Speed', line: { color: 'red', width: 2 }, yaxis: 'y2' },
-            { type: 'bar', x: [], y: [], name: 'Distance', marker: { color: 'blue' }, opacity: 0.1, yaxis: 'y2' }
+            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Direction', line: { color: '#238636', width: 2 } },
+            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Speed', line: { color: '#f85149', width: 2 }, yaxis: 'y2' },
+            { type: 'bar', x: [], y: [], name: 'Distance', marker: { color: '#58a6ff' }, opacity: 0.2, yaxis: 'y2' }
         ]);
     });
     
     // Record button
     document.getElementById('record-button').addEventListener('click', function() {
         isRecording = !isRecording;
-        this.textContent = isRecording ? 'Stop Recording' : 'Start Recording';
+        this.innerHTML = isRecording ? 
+            '<i class="bi bi-stop-circle"></i> Stop Recording' : 
+            '<i class="bi bi-record-circle"></i> Start Recording';
         this.classList.toggle('recording', isRecording);
         
         if (!isRecording && measurementData.position.length > 0) {
@@ -608,4 +704,83 @@ function loadRecording(recordingId) {
             console.error('Error loading recording:', error);
             alert('Error loading recording. See console for details.');
         });
+}
+
+// Theme management functions
+function initializeTheme() {
+    // Check for saved theme preference or use device preference
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+        document.body.classList.toggle('light-theme', savedTheme === 'light');
+        updateThemeIcon(savedTheme === 'light');
+    } else {
+        // Use device preference
+        const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.body.classList.toggle('light-theme', !prefersDarkScheme);
+        updateThemeIcon(!prefersDarkScheme);
+    }
+    
+    // Update plot styles to match theme
+    updatePlotStyles();
+}
+
+function toggleTheme() {
+    const isLightTheme = document.body.classList.toggle('light-theme');
+    localStorage.setItem('theme', isLightTheme ? 'light' : 'dark');
+    updateThemeIcon(isLightTheme);
+    
+    // Update plot styles to match theme
+    updatePlotStyles();
+}
+
+function updateThemeIcon(isLightTheme) {
+    const themeIcon = document.querySelector('#theme-toggle i');
+    themeIcon.className = isLightTheme ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+}
+
+function updatePlotStyles() {
+    const isLightTheme = document.body.classList.contains('light-theme');
+    
+    // Colors for light and dark themes
+    const gridColor = isLightTheme ? '#dfe5ec' : '#30363d';
+    const zeroLineColor = isLightTheme ? '#57606a' : '#8b949e';
+    const fontColor = isLightTheme ? '#24292f' : '#f0f6fc';
+    
+    // Update each plot with new theme colors
+    const updateLayout = {
+        xaxis: { 
+            gridcolor: gridColor,
+            zerolinecolor: zeroLineColor
+        },
+        yaxis: { 
+            gridcolor: gridColor,
+            zerolinecolor: zeroLineColor 
+        },
+        font: { color: fontColor }
+    };
+    
+    // Apply to each plot
+    const plotIds = ['orientation-plot', 'acceleration-plot', 'magnetometer-plot', 'mouse-plot'];
+    plotIds.forEach(id => {
+        Plotly.relayout(id, updateLayout);
+    });
+    
+    // Special update for 3D plot
+    Plotly.relayout('position-plot', {
+        scene: {
+            xaxis: { 
+                gridcolor: gridColor,
+                zerolinecolor: zeroLineColor
+            },
+            yaxis: { 
+                gridcolor: gridColor,
+                zerolinecolor: zeroLineColor
+            },
+            zaxis: { 
+                gridcolor: gridColor,
+                zerolinecolor: zeroLineColor
+            }
+        },
+        font: { color: fontColor }
+    });
 }
