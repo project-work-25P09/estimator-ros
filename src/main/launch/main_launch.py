@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import os
+
 import launch
 from launch import LaunchDescription
 from launch.actions import RegisterEventHandler, EmitEvent
@@ -8,6 +10,10 @@ from launch_ros.event_handlers import OnStateTransition
 from launch_ros.events.lifecycle import ChangeState
 from lifecycle_msgs.msg import Transition
 
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from ament_index_python.packages import get_package_share_directory
+
 def generate_launch_description():
     optical = LifecycleNode(
         package="optical_sensor",
@@ -16,14 +22,20 @@ def generate_launch_description():
         namespace="/",
         output="log",
     )
-
-    microstrain = LifecycleNode(
-        package="microstrain_inertial_driver",
-        executable="microstrain_launch.py",
-        name="microstrain_inertial_node",
-        namespace="/",
-        output="log",
+    
+    microstrain_path = os.path.join(
+        get_package_share_directory('microstrain_inertial_driver'),
+        'launch',
+        'microstrain_launch.py'
     )
+
+    # microstrain = Node(
+    #     package="microstrain_inertial_driver",
+    #     executable="microstrain_launch.py",
+    #     name="microstrain_inertial_node",
+    #     output="screen",
+    # )
+
 
     ld = LaunchDescription([
         optical,
@@ -40,6 +52,12 @@ def generate_launch_description():
             output="log",
         ),
     ])
+
+    ld.add_action(
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource([microstrain_path]),
+        ),
+    )
 
     ld.add_action(EmitEvent(
         event=ChangeState(
