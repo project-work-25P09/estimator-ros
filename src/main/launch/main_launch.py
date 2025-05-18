@@ -1,65 +1,69 @@
 #!/usr/bin/env python3
-from launch_ros.actions import Node, LifecycleNode, LifecycleTransition
-from lifecycle_msgs.msg import Transition
-
-
 import launch
 from launch import LaunchDescription
-
+from launch.actions import RegisterEventHandler, EmitEvent
+from launch.events import matches_action
+from launch_ros.actions import Node, LifecycleNode
+from launch_ros.event_handlers import OnStateTransition
+from launch_ros.events.lifecycle import ChangeState
+from lifecycle_msgs.msg import Transition
 
 def generate_launch_description():
-    ld = LaunchDescription(
-        [
-            LifecycleNode(
-                package="optical_sensor",
-                executable="start_optical.py",
-                name="optical_sensor_node",
-                namespace="/",
-                output="log",
-            ),
-            LifecycleNode(
-                package="microstrain_inertial_driver",
-                executable="microstrain_launch.py",
-                name="microstrain_intertial_node",
-                namespace="/",
-                output="log",
-            ),
-            Node(
-                package="estimation",
-                executable="simple_estimation.py",
-                name="estimation_node",
-                output="log",
-            ),
-            Node(
-                package="server",
-                executable="start_server_dash_full.py",
-                name="server_node",
-                output="log",
-            ),
-        ]
+    optical = LifecycleNode(
+        package="optical_sensor",
+        executable="start_optical.py",
+        name="optical_sensor_node",
+        namespace="/",
+        output="log",
     )
 
-    ld.add_action(
-        LifecycleTransition(
-            lifecycle_node_names=["optical_sensor_node"],
-            transition_ids=[
-                Transition.TRANSITION_CONFIGURE,
-                Transition.TRANSITION_ACTIVATE,
+    microstrain = LifecycleNode(
+        package="microstrain_inertial_driver",
+        executable="microstrain_launch.py",
+        name="microstrain_inertial_node",
+        namespace="/",
+        output="log",
+    )
+
+    ld = LaunchDescription([
+        optical,
+        Node(
+            package="estimation",
+            executable="simple_estimation.py",
+            name="estimation_node",
+            output="log",
+        ),
+        Node(
+            package="server",
+            executable="start_server_dash_full.py",
+            name="server_node",
+            output="log",
+        ),
+    ])
+
+    ld.add_action(EmitEvent(
+        event=ChangeState(
+            lifecycle_node_matcher=matches_action(optical),
+            transition_id=Transition.TRANSITION_CONFIGURE,
+        )
+    ))
+
+    ld.add_action(RegisterEventHandler(
+        OnStateTransition(
+            target_lifecycle_node=optical,
+            goal_state="inactive",
+            entities=[
+                EmitEvent(
+                    event=ChangeState(
+                        lifecycle_node_matcher=matches_action(optical),
+                        transition_id=Transition.TRANSITION_ACTIVATE,
+                    )
+                )
             ],
         )
-    )
-    # ld.add_action(
-    #     LifecycleTransition(
-    #         lifecycle_node_names=["microstrain_intertial_node"],
-    #         transition_ids=[
-    #             Transition.TRANSITION_CONFIGURE,
-    #             Transition.TRANSITION_ACTIVATE,
-    #         ],
-    #     )
-    # )
+    ))
 
     return ld
-
 
 if __name__ == "__main__":
     ls = launch.LaunchService()
