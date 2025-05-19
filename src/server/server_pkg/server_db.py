@@ -36,6 +36,34 @@ def init_db():
     )
     ''')
     
+    # Create estimation_data table to store individual estimation messages
+    c.execute('''
+    CREATE TABLE IF NOT EXISTS estimation_data (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        recording_id INTEGER,
+        timestamp REAL NOT NULL,
+        x REAL, y REAL, z REAL,
+        yaw REAL, pitch REAL, roll REAL,
+        acc_x REAL, acc_y REAL, acc_z REAL,
+        acc_yaw REAL, acc_pitch REAL, acc_roll REAL,
+        mag_x REAL, mag_y REAL, mag_z REAL, mag_strength REAL,
+        mouse_movement REAL, mouse_speed REAL, mouse_direction REAL, mouse_distance REAL,
+        FOREIGN KEY (recording_id) REFERENCES recordings (id)
+    )
+    ''')
+    
+    # Create reference_trajectory table to store ground truth trajectory data
+    c.execute('''
+    CREATE TABLE IF NOT EXISTS reference_trajectory (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        recording_id INTEGER,
+        name TEXT NOT NULL,
+        timestamp REAL NOT NULL,
+        x REAL, y REAL, z REAL,
+        FOREIGN KEY (recording_id) REFERENCES recordings (id)
+    )
+    ''')
+    
     conn.commit()
     conn.close()
 
@@ -200,6 +228,128 @@ def compare_recordings(recording_id1: int, recording_id2: int) -> Dict[str, Any]
             }
         
         return {"success": True, "comparison": comparison}
+    
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+def save_estimation_data(recording_id: int, estimations: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Save a list of estimation messages to the database"""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        
+        # Insert all estimation messages
+        for estimation in estimations:
+            c.execute('''
+                INSERT INTO estimation_data (
+                    recording_id, timestamp, 
+                    x, y, z, 
+                    yaw, pitch, roll, 
+                    acc_x, acc_y, acc_z, 
+                    acc_yaw, acc_pitch, acc_roll, 
+                    mag_x, mag_y, mag_z, mag_strength, 
+                    mouse_movement, mouse_speed, mouse_direction, mouse_distance
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                recording_id, estimation["timestamp"],
+                estimation.get("x", 0.0), estimation.get("y", 0.0), estimation.get("z", 0.0),
+                estimation.get("yaw", 0.0), estimation.get("pitch", 0.0), estimation.get("roll", 0.0),
+                estimation.get("acc_x", 0.0), estimation.get("acc_y", 0.0), estimation.get("acc_z", 0.0),
+                estimation.get("acc_yaw", 0.0), estimation.get("acc_pitch", 0.0), estimation.get("acc_roll", 0.0),
+                estimation.get("mag_x", 0.0), estimation.get("mag_y", 0.0), estimation.get("mag_z", 0.0), estimation.get("mag_strength", 0.0),
+                estimation.get("mouse_movement", 0.0), estimation.get("mouse_speed", 0.0), 
+                estimation.get("mouse_direction", 0.0), estimation.get("mouse_distance", 0.0)
+            ))
+        
+        conn.commit()
+        conn.close()
+        
+        return {"success": True, "message": f"Saved {len(estimations)} estimation messages"}
+    
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+def save_reference_trajectory(recording_id: int, name: str, trajectory_points: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Save a reference trajectory to the database"""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        
+        # Insert all trajectory points
+        for point in trajectory_points:
+            c.execute('''
+                INSERT INTO reference_trajectory (
+                    recording_id, name, timestamp, x, y, z
+                ) VALUES (?, ?, ?, ?, ?, ?)
+            ''', (
+                recording_id, name, point["timestamp"],
+                point.get("x", 0.0), point.get("y", 0.0), point.get("z", 0.0)
+            ))
+        
+        conn.commit()
+        conn.close()
+        
+        return {"success": True, "message": f"Saved reference trajectory '{name}' with {len(trajectory_points)} points"}
+    
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+def get_estimation_data(recording_id: int) -> Dict[str, Any]:
+    """Get all estimation data for a specific recording"""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        
+        c.execute('''
+            SELECT * FROM estimation_data 
+            WHERE recording_id = ? 
+            ORDER BY timestamp
+        ''', (recording_id,))
+        
+        rows = c.fetchall()
+        estimations = []
+        
+        for row in rows:
+            estimations.append(dict(row))
+        
+        conn.close()
+        
+        return {"success": True, "estimations": estimations}
+    
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+def get_reference_trajectories(recording_id: int) -> Dict[str, Any]:
+    """Get all reference trajectories for a specific recording"""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        
+        # First get the distinct trajectory names for this recording
+        c.execute('''
+            SELECT DISTINCT name FROM reference_trajectory 
+            WHERE recording_id = ?
+        ''', (recording_id,))
+        
+        names = [row["name"] for row in c.fetchall()]
+        trajectories = {}
+        
+        # Then get the trajectory points for each name
+        for name in names:
+            c.execute('''
+                SELECT * FROM reference_trajectory 
+                WHERE recording_id = ? AND name = ? 
+                ORDER BY timestamp
+            ''', (recording_id, name))
+            
+            rows = c.fetchall()
+            trajectories[name] = [dict(row) for row in rows]
+        
+        conn.close()
+        
+        return {"success": True, "trajectories": trajectories}
     
     except Exception as e:
         return {"success": False, "error": str(e)}
