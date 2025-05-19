@@ -1,3 +1,24 @@
 optical:
   x_to_m: 0.000017929959
   y_to_m: 0.000019627030
+imu:
+  gyro_bias:
+    - 0.0
+      0.0
+      0.0
+  accel_bias:
+    - 0.0
+      0.0
+      0.0
+  accel_scale:
+    - 0.0
+      0.0
+      0.0
+  mag_bias:
+    - 0.0
+      0.0
+      0.0
+  mag_scale:
+    - 0.0
+      0.0
+      0.0
