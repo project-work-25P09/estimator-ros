@@ -83,17 +83,17 @@ function initCharts() {
     }], {
         scene: {
             xaxis: { 
-                title: 'X Axis',
+                title: 'X Position',
                 gridcolor: '#30363d',
                 zerolinecolor: '#58a6ff'
             },
             yaxis: { 
-                title: 'Y Axis',
+                title: 'Y Position',
                 gridcolor: '#30363d',
                 zerolinecolor: '#58a6ff'
             },
             zaxis: { 
-                title: 'Z Axis',
+                title: 'Z Position',
                 gridcolor: '#30363d',
                 zerolinecolor: '#58a6ff'
             },
@@ -314,7 +314,7 @@ function initCharts() {
 }
 
 function updateCharts(data) {
-    // Position data update
+    // Position data update for 3D visualization
     const positionUpdate = {
         x: [[data.x]],
         y: [[data.y]],
