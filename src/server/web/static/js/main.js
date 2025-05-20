@@ -465,12 +465,10 @@ function updateDataStore(data) {
             timestamp: data.timestamp
         });
         
-        // Store mouse data
+        // Store mouse integrated data
         measurementData.mouse.push({
-            movement: data.mouse_movement,
-            speed: data.mouse_speed,
-            direction: data.mouse_direction,
-            distance: data.mouse_distance,
+            integrated_x: data.mouse_integrated_x,
+            integrated_y: data.mouse_integrated_y,
             timestamp: data.timestamp
         });
         
@@ -634,10 +632,8 @@ function updateDataStore(data) {
     
     measurementData.mouse.push({
         timestamp: timestamp,
-        movement: data.mouse_movement,
-        speed: data.mouse_speed,
-        direction: data.mouse_direction,
-        distance: data.mouse_distance
+        integrated_x: data.mouse_integrated_x,
+        integrated_y: data.mouse_integrated_y
     });
     
     // Add hardware data if available
@@ -972,9 +968,9 @@ function plotRecordedTrajectory(estimations) {
     const magZs = estimations.map(e => e.mag_z);
     const magStrengths = estimations.map(e => e.mag_strength);
     
-    const mouseDirections = estimations.map(e => e.mouse_direction);
-    const mouseSpeeds = estimations.map(e => e.mouse_speed);
-    const mouseDistances = estimations.map(e => e.mouse_distance);
+    // Mouse integrated values
+    const mouseIntegratedXs = estimations.map(e => e.mouse_integrated_x);
+    const mouseIntegratedYs = estimations.map(e => e.mouse_integrated_y);
     
     // Plot 3D position
     Plotly.deleteTraces('position-plot', 0);
@@ -1093,46 +1089,34 @@ function plotRecordedTrajectory(estimations) {
         }
     ]);
     
-    // Plot mouse data
+    // Plot mouse integrated data
     Plotly.deleteTraces('mouse-plot', [0, 1]);
     Plotly.addTraces('mouse-plot', [
         {
             type: 'scatter',
             mode: 'lines',
             x: timestamps,
-            y: mouseDirections,
-            name: 'Direction',
+            y: mouseIntegratedXs,
+            name: 'Integrated X',
             line: { color: '#238636', width: 2 }
         },
         {
             type: 'scatter',
             mode: 'lines',
             x: timestamps,
-            y: mouseSpeeds,
-            name: 'Speed',
-            line: { color: '#f85149', width: 2 },
-            yaxis: 'y2'
-        },
-        {
-            type: 'bar',
-            x: timestamps,
-            y: mouseDistances,
-            name: 'Distance',
-            marker: { color: '#58a6ff' },
-            opacity: 0.2,
-            yaxis: 'y2'
+            y: mouseIntegratedYs,
+            name: 'Integrated Y',
+            line: { color: '#f85149', width: 2 }
         }
     ]);
     
     // Update last values in the displays
     if (estimations.length > 0) {
         const lastEstimation = estimations[estimations.length - 1];
-        
         // Position
         document.getElementById('position-x').textContent = lastEstimation.x.toFixed(4);
         document.getElementById('position-y').textContent = lastEstimation.y.toFixed(4);
         document.getElementById('position-z').textContent = lastEstimation.z.toFixed(4);
-        
         // Orientation
         document.getElementById('orientation-roll').textContent = 
             `${lastEstimation.roll.toFixed(4)} rad (${(lastEstimation.roll * 180 / Math.PI).toFixed(2)}°)`;
@@ -1140,19 +1124,16 @@ function plotRecordedTrajectory(estimations) {
             `${lastEstimation.pitch.toFixed(4)} rad (${(lastEstimation.pitch * 180 / Math.PI).toFixed(2)}°)`;
         document.getElementById('orientation-yaw').textContent = 
             `${lastEstimation.yaw.toFixed(4)} rad (${(lastEstimation.yaw * 180 / Math.PI).toFixed(2)}°)`;
-        
         // Acceleration
         document.getElementById('acceleration-x').textContent = `${lastEstimation.acc_x.toFixed(4)} m/s²`;
         document.getElementById('acceleration-y').textContent = `${lastEstimation.acc_y.toFixed(4)} m/s²`;
         document.getElementById('acceleration-z').textContent = `${lastEstimation.acc_z.toFixed(4)} m/s²`;
-        
         // Magnetometer
         document.getElementById('magnetometer-x').textContent = `${lastEstimation.mag_x.toFixed(4)} μT`;
         document.getElementById('magnetometer-y').textContent = `${lastEstimation.mag_y.toFixed(4)} μT`;
         document.getElementById('magnetometer-z').textContent = `${lastEstimation.mag_z.toFixed(4)} μT`;
         document.getElementById('magnetometer-strength').textContent = `${lastEstimation.mag_strength.toFixed(4)} μT`;
-        
-        // Mouse
+        // Mouse integrated
         document.getElementById('mouse-integrated-x').textContent = lastEstimation.mouse_integrated_x.toFixed(4);
         document.getElementById('mouse-integrated-y').textContent = lastEstimation.mouse_integrated_y.toFixed(4);
     }
