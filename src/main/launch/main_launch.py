@@ -5,6 +5,7 @@ import launch
 from launch import LaunchDescription
 from launch.actions import RegisterEventHandler, EmitEvent
 from launch.events import matches_action
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node, LifecycleNode
 from launch_ros.event_handlers import OnStateTransition
 from launch_ros.events.lifecycle import ChangeState
@@ -63,6 +64,9 @@ def generate_launch_description():
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource([microstrain_path]),
         ),
+        launch_arguments={
+            'params_file': LaunchConfiguration('params_file')
+        }.items()
     )
     
     # Add hardware monitor launch
