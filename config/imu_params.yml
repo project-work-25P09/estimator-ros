@@ -10,4 +10,4 @@ microstrain_inertial_driver:
 
     imu_data_raw_rate: 100
     imu_mag_data_rate: 100
-    imu_data_rate: 0
+    imu_data_rate: 100
