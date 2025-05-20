@@ -10,7 +10,7 @@ import math
 import os
 import time
 import yaml
-from estimation_pkg.ekf import InertialEKF, quaternion_to_euler
+from estimation_pkg.ekf import InertialEKF, quaternion_to_euler, quaternion_to_rotation_matrix
 
 
 class EstimatorNode(Node):
@@ -120,9 +120,25 @@ class EstimatorNode(Node):
 
         # Use raw accelerometer data from the latest IMU message if available
         if self.latest_imu is not None:
-            est.acc_x = self.latest_imu.linear_acceleration.x
-            est.acc_y = self.latest_imu.linear_acceleration.y
-            est.acc_z = self.latest_imu.linear_acceleration.z
+            # Adjust acceleration values for gravity based on orientation
+            R = quaternion_to_rotation_matrix(self.ekf.q)
+            g = np.array([0.0, 0.0, 9.81])  # Gravity vector in inertial frame
+            raw_acc = np.array([
+                self.latest_imu.linear_acceleration.x,
+                self.latest_imu.linear_acceleration.y,
+                self.latest_imu.linear_acceleration.z
+            ])
+            
+            # Transform gravity to body frame for compensation
+            g_body = np.transpose(R).dot(g)
+            
+            # Subtract gravity from raw measurements to get true acceleration in body frame
+            adjusted_acc = raw_acc - g_body
+            
+            est.acc_x = adjusted_acc[0]
+            est.acc_y = adjusted_acc[1]
+            est.acc_z = adjusted_acc[2]
+            
             est.acc_yaw = self.latest_imu.angular_velocity.x
             est.acc_pitch = self.latest_imu.angular_velocity.y
             est.acc_roll = self.latest_imu.angular_velocity.z

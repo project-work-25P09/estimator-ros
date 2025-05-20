@@ -90,44 +90,93 @@ class InertialEKF:
         R = quaternion_to_rotation_matrix(self.q)
         g = np.array([0.0, 0.0, 9.81])
         a_inertial = R.dot(a_corr) - g
+        
+        # Apply acceleration threshold to reduce drift
+        acc_threshold = 0.05  # m/s^2
+        a_inertial_filtered = np.where(
+            np.abs(a_inertial) < acc_threshold, 
+            np.zeros_like(a_inertial), 
+            a_inertial
+        )
+        
+        # Simple zero-velocity detector to reduce drift
+        if np.linalg.norm(a_inertial_filtered) < 0.1 and np.linalg.norm(self.v) < 0.05:
+            # If nearly stationary, apply zero-velocity update
+            self.v *= 0.5  # Exponential decay of velocity when stationary
+        else:
+            # Normal state propagation: velocity
+            self.v += a_inertial_filtered * self.dt
+            
+        # Position update
+        self.p += self.v * self.dt + 0.5 * a_inertial_filtered * self.dt**2
 
-        # State propagation: velocity and position
-        self.v += a_inertial * self.dt
-        self.p += self.v * self.dt + 0.5 * a_inertial * self.dt**2
-
-        # Covariance propagation (simple discrete integration)
-        self.P += self.Q
+        # Improved covariance propagation using state transition matrix
+        # Build simple state transition matrix (identity + dynamics)
+        F = np.eye(15)
+        # Position affected by velocity
+        F[0:3, 3:6] = np.eye(3) * self.dt
+        
+        # Velocity affected by attitude (rotation matrix derivative)
+        F[3:6, 6:9] = -self.dt * R.dot(np.diag(a_corr))
+        
+        # Propagate covariance with state transition and process noise
+        self.P = F.dot(self.P).dot(F.T) + self.Q
 
     def update_optical(self, flow_x, flow_y):
         # Measurement z: velocity from optical flow
         z = np.array([flow_x / self.dt, flow_y / self.dt])
+        
+        # Filter out small optical flow readings to reduce noise
+        flow_threshold = 0.001
+        if abs(flow_x) < flow_threshold and abs(flow_y) < flow_threshold:
+            return  # Skip update if flow is too small
+            
+        # Apply adaptive measurement noise based on flow magnitude
+        # Higher flow values often have more uncertainty
+        flow_magnitude = np.sqrt(flow_x**2 + flow_y**2)
+        R_adaptive = self.R_opt * (1.0 + 0.5 * flow_magnitude)
 
         # Measurement model H: pick out vx, vy from state error vector
         H = np.zeros((2, 15))
-        H[0, 3] = 1
-        H[1, 4] = 1
+        H[0, 3] = 1  # x velocity
+        H[1, 4] = 1  # y velocity
 
         # Innovation y
         v_pred = np.array([self.v[0], self.v[1]])
         y = z - v_pred
-
+        
+        # Innovation gating - reject outliers
+        innovation_threshold = 3.0  # sigma
+        S = H.dot(self.P).dot(H.T) + R_adaptive
+        innovation_mahalanobis = np.sqrt(y.T.dot(np.linalg.inv(S)).dot(y))
+        
+        if innovation_mahalanobis > innovation_threshold:
+            return  # Skip update if innovation is too large
+            
         # Innovation covariance S and Kalman gain K
-        S = H.dot(self.P).dot(H.T) + self.R_opt
         K = self.P.dot(H.T).dot(np.linalg.inv(S))
 
         # State correction dx
         dx = K.dot(y)
+        
         # Update state estimates
         self.p += dx[0:3]
         self.v += dx[3:6]
+        
         # Attitude correction
         phi = dx[6:9]
         delta_q = quaternion_normalize(np.concatenate([phi * 0.5, [1.0]]))
         self.q = quaternion_multiply(delta_q, self.q)
-        # Bias corrections
-        self.b_a += dx[9:12]
-        self.b_g += dx[12:15]
-
-        # Covariance update
+        
+        # Bias corrections - apply damping factor to prevent bias from wandering
+        bias_damping = 0.95  # Reduce bias updates slightly
+        self.b_a += bias_damping * dx[9:12]
+        self.b_g += bias_damping * dx[12:15]
+        
+        # Constrain accelerometer bias to reasonable values
+        max_acc_bias = 0.5  # m/s²
+        np.clip(self.b_a, -max_acc_bias, max_acc_bias, out=self.b_a)
+        
+        # Apply Joseph form for covariance update (more numerically stable)
         I_KH = np.eye(15) - K.dot(H)
-        self.P = I_KH.dot(self.P)
+        self.P = I_KH.dot(self.P).dot(I_KH.T) + K.dot(R_adaptive).dot(K.T)
