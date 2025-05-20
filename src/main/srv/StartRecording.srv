@@ -1,0 +1,6 @@
+string filename
+bool record_optical
+bool record_imu
+bool record_estimation
+---
+bool success
