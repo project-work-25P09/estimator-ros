@@ -195,10 +195,8 @@ class EstimatorNode(Node):
             estimation.mag_y,
             estimation.mag_z,
             estimation.mag_strength,
-            estimation.mouse_movement,
-            estimation.mouse_speed,
-            estimation.mouse_direction,
-            estimation.mouse_distance,
+            estimation.mouse_integrated_x,
+            estimation.mouse_integrated_y,
         ]
         self.file_estimation.write(
             f"{ros_timestamp},{','.join(str(x) for x in data)}\n"
