@@ -63,6 +63,9 @@ def generate_launch_description():
     ld.add_action(
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource([microstrain_path]),
+            launch_arguments={
+                'params_file': '/home/project/estimator-ros/config/imu_params.yml'
+            }.items()
         ),
     )
     
