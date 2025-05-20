@@ -125,7 +125,7 @@ class EstimatorNode(Node):
             est.acc_pitch = self.latest_imu.angular_velocity.y
             est.acc_roll = self.latest_imu.angular_velocity.z
         else:
-            est.acc_x, est.acc_y, est.acc_z = = 0.0, 0.0, 0.0
+            est.acc_x, est.acc_y, est.acc_z = 0.0, 0.0, 0.0
             est.acc_yaw, est.acc_pitch, est.acc_roll = 0.0, 0.0, 0.0
 
         # Use raw magnetometer data from the latest IMU message if available
