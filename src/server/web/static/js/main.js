@@ -562,10 +562,10 @@ function setupEventListeners() {
     // Load recording button
     document.getElementById('load-button').addEventListener('click', function() {
         // Show the load recording dialog
-        document.getElementById('load-dialog').style.display = 'block';
-        
+        // document.getElementById('load-dialog').style.display = 'block';
         // Fetch available recordings
-        fetchRecordings();
+        // fetchRecordings();
+        showRecordingsList();
     });
     
     // Close dialog button
@@ -818,11 +818,16 @@ function resetCharts() {
 }
 
 function showRecordingsList() {
+    console.log("showRecordingsList called");
     // Fetch the list of recordings from the server
     fetch('/api/list_recordings')
     .then(response => response.json())
     .then(data => {
-        if (data.success) {
+        console.log("/api/list_recordings response:", data);
+        if (data.success && Array.isArray(data.recordings)) {
+            if (data.recordings.length === 0) {
+                alert('No recordings found in the database.');
+            }
             displayRecordingsList(data.recordings);
         } else {
             alert(`Error loading recordings: ${data.error || 'Unknown error'}`);
@@ -835,6 +840,7 @@ function showRecordingsList() {
 }
 
 function displayRecordingsList(recordings) {
+    console.log("displayRecordingsList called with", recordings);
     // Create or update modal dialog
     let modal = document.getElementById('recording-list-modal');
     
