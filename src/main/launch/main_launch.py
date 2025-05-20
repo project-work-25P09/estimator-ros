@@ -64,9 +64,6 @@ def generate_launch_description():
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource([microstrain_path]),
         ),
-        #launch_arguments={
-        #    'params_file': LaunchConfiguration('params_file')
-        #}.items()
     )
     
     # Add hardware monitor launch
