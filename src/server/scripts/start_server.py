@@ -18,7 +18,7 @@ from datetime import datetime
 
 from server_pkg.server_utils import ConnectionManager
 from server_pkg.server_api import APICommand, ServerAPI
-from server_pkg.server_db import init_db, save_recording, list_recordings, get_recording, delete_recording, compare_recordings
+from server_pkg.server_db import init_db, save_recording, list_recordings, get_recording, delete_recording, compare_recordings, save_estimation_data, get_estimation_data, get_reference_trajectories
 
 # Global variables for data management
 data_ros = []
