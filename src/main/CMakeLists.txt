@@ -9,6 +9,15 @@ find_package(rclpy REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 find_package(ament_cmake REQUIRED)
 
+find_package(estimation REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+
+install(PROGRAMS
+  "scripts/recording_service_node.py"
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
 )
