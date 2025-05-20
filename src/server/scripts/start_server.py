@@ -62,10 +62,8 @@ class EstimationListener(Node):
                 "mag_y": msg.mag_y,
                 "mag_z": msg.mag_z,
                 "mag_strength": msg.mag_strength,
-                "mouse_movement": msg.mouse_movement,
-                "mouse_speed": msg.mouse_speed,
-                "mouse_direction": msg.mouse_direction,
-                "mouse_distance": msg.mouse_distance
+                "mouse_integrated_x": msg.mouse_integrated_x,
+                "mouse_integrated_y": msg.mouse_integrated_y
             }
             
             # Store the latest data
@@ -74,7 +72,7 @@ class EstimationListener(Node):
                 msg.x, msg.y, msg.z, msg.yaw, msg.pitch, msg.roll, 
                 msg.acc_x, msg.acc_y, msg.acc_z, msg.acc_yaw, msg.acc_pitch, msg.acc_roll, 
                 msg.mag_x, msg.mag_y, msg.mag_z, msg.mag_strength, 
-                msg.mouse_movement, msg.mouse_speed, msg.mouse_direction, msg.mouse_distance
+                msg.mouse_integrated_x, msg.mouse_integrated_y
             ))
             
             # Store data in recording buffer if we're recording
@@ -327,10 +325,8 @@ def get_latest_data():
             "mag_y": latest[14],
             "mag_z": latest[15],
             "mag_strength": latest[16],
-            "mouse_movement": latest[17],
-            "mouse_speed": latest[18],
-            "mouse_direction": latest[19],
-            "mouse_distance": latest[20]
+            "mouse_integrated_x": latest[17],
+            "mouse_integrated_y": latest[18]
         }
         
         # Add hardware monitor data if available

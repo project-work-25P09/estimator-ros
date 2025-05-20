@@ -47,7 +47,7 @@ def init_db():
         acc_x REAL, acc_y REAL, acc_z REAL,
         acc_yaw REAL, acc_pitch REAL, acc_roll REAL,
         mag_x REAL, mag_y REAL, mag_z REAL, mag_strength REAL,
-        mouse_movement REAL, mouse_speed REAL, mouse_direction REAL, mouse_distance REAL,
+        mouse_integrated_x REAL, mouse_integrated_y REAL,
         FOREIGN KEY (recording_id) REFERENCES recordings (id)
     )
     ''')
@@ -248,8 +248,8 @@ def save_estimation_data(recording_id: int, estimations: List[Dict[str, Any]]) -
                     acc_x, acc_y, acc_z, 
                     acc_yaw, acc_pitch, acc_roll, 
                     mag_x, mag_y, mag_z, mag_strength, 
-                    mouse_movement, mouse_speed, mouse_direction, mouse_distance
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    mouse_integrated_x, mouse_integrated_y
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
                 recording_id, estimation["timestamp"],
                 estimation.get("x", 0.0), estimation.get("y", 0.0), estimation.get("z", 0.0),
@@ -257,8 +257,7 @@ def save_estimation_data(recording_id: int, estimations: List[Dict[str, Any]]) -
                 estimation.get("acc_x", 0.0), estimation.get("acc_y", 0.0), estimation.get("acc_z", 0.0),
                 estimation.get("acc_yaw", 0.0), estimation.get("acc_pitch", 0.0), estimation.get("acc_roll", 0.0),
                 estimation.get("mag_x", 0.0), estimation.get("mag_y", 0.0), estimation.get("mag_z", 0.0), estimation.get("mag_strength", 0.0),
-                estimation.get("mouse_movement", 0.0), estimation.get("mouse_speed", 0.0), 
-                estimation.get("mouse_direction", 0.0), estimation.get("mouse_distance", 0.0)
+                estimation.get("mouse_integrated_x", 0.0), estimation.get("mouse_integrated_y", 0.0)
             ))
         
         conn.commit()

@@ -49,10 +49,8 @@ class ServerROS(Node):
             "mag_y": msg.mag_y,
             "mag_z": msg.mag_z,
             "mag_strength": msg.mag_strength,
-            "mouse_movement": msg.mouse_movement,
-            "mouse_speed": msg.mouse_speed,
-            "mouse_direction": msg.mouse_direction,
-            "mouse_distance": msg.mouse_distance
+            "mouse_integrated_x": msg.mouse_integrated_x,
+            "mouse_integrated_y": msg.mouse_integrated_y
         }
     
     def hw_monitor_callback(self, msg):

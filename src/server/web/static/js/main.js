@@ -296,40 +296,25 @@ function initCharts() {
         mode: 'lines',
         x: [],
         y: [],
-        name: 'Direction',
+        name: 'Integrated X',
         line: { color: '#238636', width: 2 }
     }, {
         type: 'scatter',
         mode: 'lines',
         x: [],
         y: [],
-        name: 'Speed',
-        line: { color: '#f85149', width: 2 },
-        yaxis: 'y2'
-    }, {
-        type: 'bar',
-        x: [],
-        y: [],
-        name: 'Distance',
-        marker: { color: '#58a6ff' },
-        opacity: 0.2,
-        yaxis: 'y2'
+        name: 'Integrated Y',
+        line: { color: '#f85149', width: 2 }
     }], {
         xaxis: { 
-            title: 'Time',
+            title: 'Time (seconds)',
             gridcolor: '#30363d',
             zerolinecolor: '#8b949e' 
         },
         yaxis: { 
-            title: 'Direction (deg)',
+            title: 'Integrated Value',
             gridcolor: '#30363d',
             zerolinecolor: '#8b949e'
-        },
-        yaxis2: {
-            title: 'Speed (m/s) & Distance (m)',
-            overlaying: 'y',
-            side: 'right',
-            showgrid: false
         },
         legend: {
             orientation: 'h',
@@ -381,16 +366,14 @@ function updateCharts(data) {
     
     // Mouse data update
     const mouseUpdate = {
-        x: [[data.timestamp], [data.timestamp], [data.timestamp]],
-        y: [[data.mouse_direction], [data.mouse_speed], [data.mouse_distance]]
+        x: [[data.timestamp], [data.timestamp]],
+        y: [[data.mouse_integrated_x], [data.mouse_integrated_y]]
     };
-    
-    Plotly.extendTraces('mouse-plot', mouseUpdate, [0, 1, 2], 100);
+    Plotly.extendTraces('mouse-plot', mouseUpdate, [0, 1], 100);
     
     // Update mouse numeric displays
-    document.getElementById('mouse-speed').textContent = data.mouse_speed.toFixed(4);
-    document.getElementById('mouse-direction').textContent = `${data.mouse_direction.toFixed(4)}°`;
-    document.getElementById('mouse-distance').textContent = data.mouse_distance.toFixed(4);
+    document.getElementById('mouse-integrated-x').textContent = data.mouse_integrated_x.toFixed(4);
+    document.getElementById('mouse-integrated-y').textContent = data.mouse_integrated_y.toFixed(4);
     
     // Hardware monitor data update (if available)
     if (data.hw_cpu_usage !== undefined) {
@@ -560,11 +543,10 @@ function setupEventListeners() {
             { type: 'bar', x: [], y: [], name: 'Field', marker: { color: '#e3b341' }, opacity: 0.4, yaxis: 'y2' }
         ]);
         
-        Plotly.deleteTraces('mouse-plot', [0, 1, 2]);
+        Plotly.deleteTraces('mouse-plot', [0, 1]);
         Plotly.addTraces('mouse-plot', [
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Direction', line: { color: '#238636', width: 2 } },
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Speed', line: { color: '#f85149', width: 2 }, yaxis: 'y2' },
-            { type: 'bar', x: [], y: [], name: 'Distance', marker: { color: '#58a6ff' }, opacity: 0.2, yaxis: 'y2' }
+            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Integrated X', line: { color: '#238636', width: 2 } },
+            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Integrated Y', line: { color: '#f85149', width: 2 } }
         ]);
     });
     
@@ -1112,7 +1094,7 @@ function plotRecordedTrajectory(estimations) {
     ]);
     
     // Plot mouse data
-    Plotly.deleteTraces('mouse-plot', [0, 1, 2]);
+    Plotly.deleteTraces('mouse-plot', [0, 1]);
     Plotly.addTraces('mouse-plot', [
         {
             type: 'scatter',
@@ -1171,9 +1153,8 @@ function plotRecordedTrajectory(estimations) {
         document.getElementById('magnetometer-strength').textContent = `${lastEstimation.mag_strength.toFixed(4)} μT`;
         
         // Mouse
-        document.getElementById('mouse-speed').textContent = lastEstimation.mouse_speed.toFixed(4);
-        document.getElementById('mouse-direction').textContent = `${lastEstimation.mouse_direction.toFixed(4)}°`;
-        document.getElementById('mouse-distance').textContent = lastEstimation.mouse_distance.toFixed(4);
+        document.getElementById('mouse-integrated-x').textContent = lastEstimation.mouse_integrated_x.toFixed(4);
+        document.getElementById('mouse-integrated-y').textContent = lastEstimation.mouse_integrated_y.toFixed(4);
     }
 }
 
