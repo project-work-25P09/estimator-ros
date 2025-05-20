@@ -33,3 +33,9 @@ To start everything, use the monolithic start script:
 ```bash
 ros2 launch main main_launch.py
 ```
+
+## Injecting dummy data to BD 
+
+```bash
+PYTHONPATH=src/server python3 src/server/scripts/inject_dummy_recordings.py
+```

@@ -164,16 +164,19 @@ def delete_recording(recording_id: int) -> Dict[str, Any]:
     try:
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-        
-        # First delete associated measurements
+
+        # Delete associated estimation data
+        c.execute("DELETE FROM estimation_data WHERE recording_id = ?", (recording_id,))
+        # Delete associated reference trajectories
+        c.execute("DELETE FROM reference_trajectory WHERE recording_id = ?", (recording_id,))
+        # Delete associated measurements
         c.execute("DELETE FROM measurements WHERE recording_id = ?", (recording_id,))
-        
-        # Then delete the recording itself
+        # Delete the recording itself
         c.execute("DELETE FROM recordings WHERE id = ?", (recording_id,))
-        
+
         conn.commit()
         conn.close()
-        
+
         return {"success": True, "message": f"Recording with ID {recording_id} deleted"}
     
     except Exception as e:
