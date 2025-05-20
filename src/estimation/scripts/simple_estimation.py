@@ -25,6 +25,8 @@ class EstimatorNode(Node):
         self.opt_int_x = 0.0
         self.opt_int_y = 0.0
 
+        self.latest_imu = None
+
         self.do_save = True
         self.do_save_imu = True
         self.do_save_optical = True
