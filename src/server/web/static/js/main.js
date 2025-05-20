@@ -14,7 +14,11 @@ let charts = {};
 let socket = null;
 let isRecording = false;
 let isPaused = false;
+let isPlayingRecording = false;
 let currentTrajectory = "trajectory1";
+let currentRecordingId = null;
+let recordingBuffer = [];
+let referenceTrajectories = {};
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
@@ -39,9 +43,37 @@ function initWebSocket() {
     socket.addEventListener('message', function(event) {
         const data = JSON.parse(event.data);
         
-        if (!isPaused) {
-            updateCharts(data);
-            updateDataStore(data);
+        // Handle different message types
+        if (data.type === "connected") {
+            console.log('Connected to the WebSocket server');
+            document.getElementById('connection-status').textContent = 'Connected';
+            document.getElementById('connection-status').classList.add('connected');
+            
+            // Update recording status if provided
+            if (data.recording !== undefined) {
+                updateRecordingStatus(data.recording);
+            }
+        } else if (data.type === "recording_status") {
+            updateRecordingStatus(data.recording);
+        } else if (data.type === "loaded_recording") {
+            handleLoadedRecording(data);
+        } else {
+            // Regular data update
+            if (!isPaused && !isPlayingRecording) {
+                updateCharts(data);
+                updateDataStore(data);
+                
+                // Update recording status indicator if provided
+                if (data.recording !== undefined) {
+                    updateRecordingStatus(data.recording);
+                    
+                    // Update recording counter if available
+                    if (data.recording && data.recording_data_points !== undefined) {
+                        document.getElementById('recording-counter').textContent = 
+                            `Recording: ${data.recording_data_points} data points`;
+                    }
+                }
+            }
         }
     });
     
@@ -83,17 +115,17 @@ function initCharts() {
     }], {
         scene: {
             xaxis: { 
-                title: 'X Axis',
+                title: 'X Position',
                 gridcolor: '#30363d',
                 zerolinecolor: '#58a6ff'
             },
             yaxis: { 
-                title: 'Y Axis',
+                title: 'Y Position',
                 gridcolor: '#30363d',
                 zerolinecolor: '#58a6ff'
             },
             zaxis: { 
-                title: 'Z Axis',
+                title: 'Z Position',
                 gridcolor: '#30363d',
                 zerolinecolor: '#58a6ff'
             },
@@ -264,40 +296,25 @@ function initCharts() {
         mode: 'lines',
         x: [],
         y: [],
-        name: 'Direction',
+        name: 'Integrated X',
         line: { color: '#238636', width: 2 }
     }, {
         type: 'scatter',
         mode: 'lines',
         x: [],
         y: [],
-        name: 'Speed',
-        line: { color: '#f85149', width: 2 },
-        yaxis: 'y2'
-    }, {
-        type: 'bar',
-        x: [],
-        y: [],
-        name: 'Distance',
-        marker: { color: '#58a6ff' },
-        opacity: 0.2,
-        yaxis: 'y2'
+        name: 'Integrated Y',
+        line: { color: '#f85149', width: 2 }
     }], {
         xaxis: { 
-            title: 'Time',
+            title: 'Time (seconds)',
             gridcolor: '#30363d',
             zerolinecolor: '#8b949e' 
         },
         yaxis: { 
-            title: 'Direction (deg)',
+            title: 'Integrated Value',
             gridcolor: '#30363d',
             zerolinecolor: '#8b949e'
-        },
-        yaxis2: {
-            title: 'Speed (m/s) & Distance (m)',
-            overlaying: 'y',
-            side: 'right',
-            showgrid: false
         },
         legend: {
             orientation: 'h',
@@ -314,7 +331,7 @@ function initCharts() {
 }
 
 function updateCharts(data) {
-    // Position data update
+    // Position data update for 3D visualization
     const positionUpdate = {
         x: [[data.x]],
         y: [[data.y]],
@@ -349,16 +366,14 @@ function updateCharts(data) {
     
     // Mouse data update
     const mouseUpdate = {
-        x: [[data.timestamp], [data.timestamp], [data.timestamp]],
-        y: [[data.mouse_direction], [data.mouse_speed], [data.mouse_distance]]
+        x: [[data.timestamp], [data.timestamp]],
+        y: [[data.mouse_integrated_x], [data.mouse_integrated_y]]
     };
-    
-    Plotly.extendTraces('mouse-plot', mouseUpdate, [0, 1, 2], 100);
+    Plotly.extendTraces('mouse-plot', mouseUpdate, [0, 1], 100);
     
     // Update mouse numeric displays
-    document.getElementById('mouse-speed').textContent = data.mouse_speed.toFixed(4);
-    document.getElementById('mouse-direction').textContent = `${data.mouse_direction.toFixed(4)}°`;
-    document.getElementById('mouse-distance').textContent = data.mouse_distance.toFixed(4);
+    document.getElementById('mouse-integrated-x').textContent = data.mouse_integrated_x.toFixed(4);
+    document.getElementById('mouse-integrated-y').textContent = data.mouse_integrated_y.toFixed(4);
     
     // Hardware monitor data update (if available)
     if (data.hw_cpu_usage !== undefined) {
@@ -450,12 +465,10 @@ function updateDataStore(data) {
             timestamp: data.timestamp
         });
         
-        // Store mouse data
+        // Store mouse integrated data
         measurementData.mouse.push({
-            movement: data.mouse_movement,
-            speed: data.mouse_speed,
-            direction: data.mouse_direction,
-            distance: data.mouse_distance,
+            integrated_x: data.mouse_integrated_x,
+            integrated_y: data.mouse_integrated_y,
             timestamp: data.timestamp
         });
         
@@ -528,25 +541,21 @@ function setupEventListeners() {
             { type: 'bar', x: [], y: [], name: 'Field', marker: { color: '#e3b341' }, opacity: 0.4, yaxis: 'y2' }
         ]);
         
-        Plotly.deleteTraces('mouse-plot', [0, 1, 2]);
+        Plotly.deleteTraces('mouse-plot', [0, 1]);
         Plotly.addTraces('mouse-plot', [
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Direction', line: { color: '#238636', width: 2 } },
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Speed', line: { color: '#f85149', width: 2 }, yaxis: 'y2' },
-            { type: 'bar', x: [], y: [], name: 'Distance', marker: { color: '#58a6ff' }, opacity: 0.2, yaxis: 'y2' }
+            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Integrated X', line: { color: '#238636', width: 2 } },
+            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Integrated Y', line: { color: '#f85149', width: 2 } }
         ]);
     });
     
     // Record button
     document.getElementById('record-button').addEventListener('click', function() {
-        isRecording = !isRecording;
-        this.innerHTML = isRecording ? 
-            '<i class="bi bi-stop-circle"></i> Stop Recording' : 
-            '<i class="bi bi-record-circle"></i> Start Recording';
-        this.classList.toggle('recording', isRecording);
-        
-        if (!isRecording && measurementData.position.length > 0) {
-            // Save the recorded data
-            saveRecording();
+        if (!isRecording) {
+            // Start recording
+            startRecording();
+        } else {
+            // Stop recording
+            stopRecording();
         }
     });
     
@@ -585,125 +594,612 @@ function setupEventListeners() {
     });
 }
 
-function saveRecording() {
-    // Create a name for the recording based on timestamp
-    const timestamp = new Date().toISOString().replace(/:/g, '-');
-    const recordingName = `recording_${timestamp}`;
+function updateDataStore(data) {
+    // Add data to measurement store (for later saving)
+    const timestamp = data.timestamp;
     
-    // Send data to the server for saving
-    fetch('/api/save_recording', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            name: recordingName,
-            data: measurementData
+    measurementData.position.push({
+        timestamp: timestamp,
+        x: data.x,
+        y: data.y,
+        z: data.z
+    });
+    
+    measurementData.orientation.push({
+        timestamp: timestamp,
+        roll: data.roll,
+        pitch: data.pitch,
+        yaw: data.yaw
+    });
+    
+    measurementData.acceleration.push({
+        timestamp: timestamp,
+        x: data.acc_x,
+        y: data.acc_y,
+        z: data.acc_z,
+        yaw: data.acc_yaw,
+        pitch: data.acc_pitch,
+        roll: data.acc_roll
+    });
+    
+    measurementData.magnetometer.push({
+        timestamp: timestamp,
+        x: data.mag_x,
+        y: data.mag_y,
+        z: data.mag_z,
+        strength: data.mag_strength
+    });
+    
+    measurementData.mouse.push({
+        timestamp: timestamp,
+        integrated_x: data.mouse_integrated_x,
+        integrated_y: data.mouse_integrated_y
+    });
+    
+    // Add hardware data if available
+    if (data.hw_cpu_usage !== undefined) {
+        measurementData.hardware.push({
+            timestamp: timestamp,
+            cpu_usage: data.hw_cpu_usage,
+            memory_mb: data.hw_memory_mb,
+            disk_rx_mb: data.disk_rx_mb,
+            disk_tx_mb: data.disk_tx_mb,
+            network_rx_mb: data.hw_network_rx_mb,
+            network_tx_mb: data.hw_network_tx_mb,
+            power_consumption: data.hw_power_consumption,
+            temperature: data.hw_temperature
+        });
+    }
+    
+    // Limit the size of the arrays (to prevent memory issues)
+    const maxSize = 5000;
+    Object.keys(measurementData).forEach(key => {
+        if (measurementData[key].length > maxSize) {
+            measurementData[key] = measurementData[key].slice(-maxSize);
+        }
+    });
+    
+    // Update data displays
+    document.getElementById('position-x').textContent = data.x.toFixed(4);
+    document.getElementById('position-y').textContent = data.y.toFixed(4);
+    document.getElementById('position-z').textContent = data.z.toFixed(4);
+    
+    // Update orientation displays with both radians and degrees
+    document.getElementById('orientation-roll').textContent = 
+        `${data.roll.toFixed(4)} rad (${(data.roll * 180 / Math.PI).toFixed(2)}°)`;
+    document.getElementById('orientation-pitch').textContent = 
+        `${data.pitch.toFixed(4)} rad (${(data.pitch * 180 / Math.PI).toFixed(2)}°)`;
+    document.getElementById('orientation-yaw').textContent = 
+        `${data.yaw.toFixed(4)} rad (${(data.yaw * 180 / Math.PI).toFixed(2)}°)`;
+    
+    // Update acceleration displays
+    document.getElementById('acceleration-x').textContent = `${data.acc_x.toFixed(4)} m/s²`;
+    document.getElementById('acceleration-y').textContent = `${data.acc_y.toFixed(4)} m/s²`;
+    document.getElementById('acceleration-z').textContent = `${data.acc_z.toFixed(4)} m/s²`;
+    
+    // Update magnetometer displays
+    document.getElementById('magnetometer-x').textContent = `${data.mag_x.toFixed(4)} μT`;
+    document.getElementById('magnetometer-y').textContent = `${data.mag_y.toFixed(4)} μT`;
+    document.getElementById('magnetometer-z').textContent = `${data.mag_z.toFixed(4)} μT`;
+    document.getElementById('magnetometer-strength').textContent = `${data.mag_strength.toFixed(4)} μT`;
+}
+
+function updateRecordingStatus(recording) {
+    isRecording = recording;
+    const recordButton = document.getElementById('record-button');
+    
+    if (recording) {
+        recordButton.innerHTML = '<i class="bi bi-stop-circle"></i> Stop Recording';
+        recordButton.classList.add('recording');
+        
+        // Show recording indicator
+        document.getElementById('recording-indicator').style.display = 'flex';
+        
+        // Hide the recording list if it's open
+        const recordingListModal = document.getElementById('recording-list-modal');
+        if (recordingListModal) {
+            recordingListModal.style.display = 'none';
+        }
+    } else {
+        recordButton.innerHTML = '<i class="bi bi-record-circle"></i> Start Recording';
+        recordButton.classList.remove('recording');
+        
+        // Hide recording indicator
+        document.getElementById('recording-indicator').style.display = 'none';
+    }
+}
+
+function startRecording() {
+    // Clear measurement data before starting new recording
+    resetMeasurementData();
+    
+    // Send command to start recording
+    if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({
+            type: 'start_recording'
+        }));
+    }
+}
+
+function stopRecording() {
+    // Prompt for recording name and description
+    const name = prompt('Enter a name for this recording:', 
+        `recording_${new Date().toISOString().replace(/[:.]/g, '-')}`);
+    
+    if (name === null) {
+        // User canceled
+        return;
+    }
+    
+    const description = prompt('Enter a description (optional):', '');
+    
+    // Send command to stop recording
+    if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({
+            type: 'stop_recording',
+            name: name,
+            description: description || ''
+        }));
+        
+        // Send to server API to save
+        fetch('/api/command', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                type: 'stop_recording',
+                data: {
+                    name: name,
+                    description: description || ''
+                }
+            })
         })
-    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`Recording saved as: ${name}`);
+                currentRecordingId = data.recording_id;
+            } else {
+                alert(`Error saving recording: ${data.message || 'Unknown error'}`);
+            }
+        })
+        .catch(error => {
+            console.error('Error saving recording:', error);
+            alert('Error saving recording. See console for details.');
+        });
+    }
+}
+
+function resetMeasurementData() {
+    // Reset all measurement data arrays
+    Object.keys(measurementData).forEach(key => {
+        measurementData[key] = [];
+    });
+    
+    recordingBuffer = [];
+}
+
+function resetCharts() {
+    // Reset all charts to empty state
+    Plotly.deleteTraces('position-plot', 0);
+    Plotly.addTraces('position-plot', {
+        type: 'scatter3d',
+        mode: 'lines+markers',
+        x: [],
+        y: [],
+        z: [],
+        marker: {
+            size: 4,
+            color: '#58a6ff',
+            opacity: 0.8
+        },
+        line: {
+            width: 3,
+            color: '#58a6ff',
+            opacity: 0.7
+        },
+        name: 'Current Trajectory'
+    });
+    
+    // Reset other charts
+    ['orientation-plot', 'acceleration-plot', 'magnetometer-plot', 'mouse-plot'].forEach(plot => {
+        const traces = document.getElementById(plot).data;
+        for (let i = 0; i < traces.length; i++) {
+            Plotly.deleteTraces(plot, 0);
+        }
+    });
+    
+    // Re-initialize charts
+    initCharts();
+    
+    // Reset measurement data
+    resetMeasurementData();
+}
+
+function showRecordingsList() {
+    // Fetch the list of recordings from the server
+    fetch('/api/list_recordings')
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert(`Recording saved as "${recordingName}"`);
-            // Reset the measurement data
-            measurementData = {
-                position: [],
-                orientation: [],
-                acceleration: [],
-                magnetometer: [],
-                mouse: [],
-                hardware: []
-            };
+            displayRecordingsList(data.recordings);
         } else {
-            alert('Failed to save recording: ' + data.error);
+            alert(`Error loading recordings: ${data.error || 'Unknown error'}`);
         }
     })
     .catch(error => {
-        console.error('Error saving recording:', error);
-        alert('Error saving recording. See console for details.');
+        console.error('Error loading recordings:', error);
+        alert('Error loading recordings. See console for details.');
     });
 }
 
-function fetchRecordings() {
-    fetch('/api/list_recordings')
-        .then(response => response.json())
-        .then(data => {
-            const select = document.getElementById('recording-select');
-            select.innerHTML = '';
-            
-            if (data.recordings && data.recordings.length > 0) {
-                data.recordings.forEach(recording => {
-                    const option = document.createElement('option');
-                    option.value = recording.id;
-                    option.textContent = `${recording.name} (${recording.date})`;
-                    select.appendChild(option);
-                });
-                
-                document.getElementById('load-recording-btn').disabled = false;
-            } else {
-                const option = document.createElement('option');
-                option.value = '';
-                option.textContent = 'No recordings available';
-                select.appendChild(option);
-                
-                document.getElementById('load-recording-btn').disabled = true;
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching recordings:', error);
-            alert('Error fetching recordings. See console for details.');
+function displayRecordingsList(recordings) {
+    // Create or update modal dialog
+    let modal = document.getElementById('recording-list-modal');
+    
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'recording-list-modal';
+        modal.className = 'modal';
+        document.body.appendChild(modal);
+    }
+    
+    // Create modal content
+    let html = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Saved Recordings</h2>
+                <span class="close-button" onclick="document.getElementById('recording-list-modal').style.display='none'">&times;</span>
+            </div>
+            <div class="modal-body">
+                <table class="recordings-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+    `;
+    
+    if (recordings.length === 0) {
+        html += `
+            <tr>
+                <td colspan="4" class="no-recordings">No recordings found</td>
+            </tr>
+        `;
+    } else {
+        recordings.forEach(rec => {
+            html += `
+                <tr>
+                    <td>${rec.name}</td>
+                    <td>${rec.date}</td>
+                    <td>${rec.description || '-'}</td>
+                    <td>
+                        <button onclick="loadRecording(${rec.id})">Load</button>
+                        <button onclick="deleteRecording(${rec.id})">Delete</button>
+                    </td>
+                </tr>
+            `;
         });
+    }
+    
+    html += `
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+    
+    modal.innerHTML = html;
+    modal.style.display = 'block';
 }
 
 function loadRecording(recordingId) {
-    fetch(`/api/get_recording/${recordingId}`)
+    if (socket.readyState === WebSocket.OPEN) {
+        // Reset current view
+        resetCharts();
+        
+        // Pause realtime updates
+        isPaused = true;
+        document.getElementById('pause-button').innerHTML = '<i class="bi bi-play-fill"></i> Resume';
+        
+        // Set the playback mode
+        isPlayingRecording = true;
+        currentRecordingId = recordingId;
+        
+        // Request recording data via websocket
+        socket.send(JSON.stringify({
+            type: 'load_recording',
+            recording_id: recordingId
+        }));
+        
+        // Close the modal
+        document.getElementById('recording-list-modal').style.display = 'none';
+    }
+}
+
+function handleLoadedRecording(data) {
+    // Store the recording data
+    const estimations = data.estimations || [];
+    referenceTrajectories = data.reference_trajectories || {};
+    
+    // Show toast notification
+    showToast(`Loaded recording: ${data.recording.name || 'Unnamed'} (${estimations.length} points)`);
+    
+    // Plot all estimation data points
+    if (estimations.length > 0) {
+        plotRecordedTrajectory(estimations);
+    }
+    
+    // Add reference trajectories if available
+    for (const [name, points] of Object.entries(referenceTrajectories)) {
+        if (points && points.length > 0) {
+            addReferenceTrajectory(name, points);
+        }
+    }
+    
+    // Update UI to show we're in playback mode
+    document.getElementById('recording-playback-indicator').style.display = 'flex';
+    document.getElementById('recording-playback-name').textContent = 
+        data.recording.name || `Recording #${data.recording_id}`;
+}
+
+function plotRecordedTrajectory(estimations) {
+    // Extract data for each chart
+    const timestamps = estimations.map(e => e.timestamp);
+    const xPositions = estimations.map(e => e.x);
+    const yPositions = estimations.map(e => e.y);
+    const zPositions = estimations.map(e => e.z);
+    
+    const rolls = estimations.map(e => e.roll);
+    const pitches = estimations.map(e => e.pitch);
+    const yaws = estimations.map(e => e.yaw);
+    
+    const accXs = estimations.map(e => e.acc_x);
+    const accYs = estimations.map(e => e.acc_y);
+    const accZs = estimations.map(e => e.acc_z);
+    
+    const magXs = estimations.map(e => e.mag_x);
+    const magYs = estimations.map(e => e.mag_y);
+    const magZs = estimations.map(e => e.mag_z);
+    const magStrengths = estimations.map(e => e.mag_strength);
+    
+    // Mouse integrated values
+    const mouseIntegratedXs = estimations.map(e => e.mouse_integrated_x);
+    const mouseIntegratedYs = estimations.map(e => e.mouse_integrated_y);
+    
+    // Plot 3D position
+    Plotly.deleteTraces('position-plot', 0);
+    Plotly.addTraces('position-plot', {
+        type: 'scatter3d',
+        mode: 'lines+markers',
+        x: xPositions,
+        y: yPositions,
+        z: zPositions,
+        marker: {
+            size: 4,
+            color: '#58a6ff',
+            opacity: 0.8
+        },
+        line: {
+            width: 3,
+            color: '#58a6ff',
+            opacity: 0.7
+        },
+        name: 'Estimated Trajectory'
+    });
+    
+    // Plot orientation data
+    Plotly.deleteTraces('orientation-plot', [0, 1, 2]);
+    Plotly.addTraces('orientation-plot', [
+        {
+            type: 'scatter',
+            mode: 'lines',
+            x: timestamps,
+            y: rolls,
+            name: 'Roll',
+            line: { color: '#f85149', width: 2 }
+        },
+        {
+            type: 'scatter',
+            mode: 'lines',
+            x: timestamps,
+            y: pitches,
+            name: 'Pitch',
+            line: { color: '#238636', width: 2 }
+        },
+        {
+            type: 'scatter',
+            mode: 'lines',
+            x: timestamps,
+            y: yaws,
+            name: 'Yaw',
+            line: { color: '#58a6ff', width: 2 }
+        }
+    ]);
+    
+    // Plot acceleration data
+    Plotly.deleteTraces('acceleration-plot', [0, 1, 2]);
+    Plotly.addTraces('acceleration-plot', [
+        {
+            type: 'scatter',
+            mode: 'lines',
+            x: timestamps,
+            y: accXs,
+            name: 'Acc X',
+            line: { color: '#f85149', width: 2 }
+        },
+        {
+            type: 'scatter',
+            mode: 'lines',
+            x: timestamps,
+            y: accYs,
+            name: 'Acc Y',
+            line: { color: '#238636', width: 2 }
+        },
+        {
+            type: 'scatter',
+            mode: 'lines',
+            x: timestamps,
+            y: accZs,
+            name: 'Acc Z',
+            line: { color: '#58a6ff', width: 2 }
+        }
+    ]);
+    
+    // Plot magnetometer data
+    Plotly.deleteTraces('magnetometer-plot', [0, 1, 2, 3]);
+    Plotly.addTraces('magnetometer-plot', [
+        {
+            type: 'scatter',
+            mode: 'lines',
+            x: timestamps,
+            y: magXs,
+            name: 'Mag X',
+            line: { color: '#f85149', width: 2 }
+        },
+        {
+            type: 'scatter',
+            mode: 'lines',
+            x: timestamps,
+            y: magYs,
+            name: 'Mag Y',
+            line: { color: '#238636', width: 2 }
+        },
+        {
+            type: 'scatter',
+            mode: 'lines',
+            x: timestamps,
+            y: magZs,
+            name: 'Mag Z',
+            line: { color: '#58a6ff', width: 2 }
+        },
+        {
+            type: 'bar',
+            x: timestamps,
+            y: magStrengths,
+            name: 'Field',
+            marker: { color: '#e3b341' },
+            opacity: 0.4,
+            yaxis: 'y2'
+        }
+    ]);
+    
+    // Plot mouse integrated data
+    Plotly.deleteTraces('mouse-plot', [0, 1]);
+    Plotly.addTraces('mouse-plot', [
+        {
+            type: 'scatter',
+            mode: 'lines',
+            x: timestamps,
+            y: mouseIntegratedXs,
+            name: 'Integrated X',
+            line: { color: '#238636', width: 2 }
+        },
+        {
+            type: 'scatter',
+            mode: 'lines',
+            x: timestamps,
+            y: mouseIntegratedYs,
+            name: 'Integrated Y',
+            line: { color: '#f85149', width: 2 }
+        }
+    ]);
+    
+    // Update last values in the displays
+    if (estimations.length > 0) {
+        const lastEstimation = estimations[estimations.length - 1];
+        // Position
+        document.getElementById('position-x').textContent = lastEstimation.x.toFixed(4);
+        document.getElementById('position-y').textContent = lastEstimation.y.toFixed(4);
+        document.getElementById('position-z').textContent = lastEstimation.z.toFixed(4);
+        // Orientation
+        document.getElementById('orientation-roll').textContent = 
+            `${lastEstimation.roll.toFixed(4)} rad (${(lastEstimation.roll * 180 / Math.PI).toFixed(2)}°)`;
+        document.getElementById('orientation-pitch').textContent = 
+            `${lastEstimation.pitch.toFixed(4)} rad (${(lastEstimation.pitch * 180 / Math.PI).toFixed(2)}°)`;
+        document.getElementById('orientation-yaw').textContent = 
+            `${lastEstimation.yaw.toFixed(4)} rad (${(lastEstimation.yaw * 180 / Math.PI).toFixed(2)}°)`;
+        // Acceleration
+        document.getElementById('acceleration-x').textContent = `${lastEstimation.acc_x.toFixed(4)} m/s²`;
+        document.getElementById('acceleration-y').textContent = `${lastEstimation.acc_y.toFixed(4)} m/s²`;
+        document.getElementById('acceleration-z').textContent = `${lastEstimation.acc_z.toFixed(4)} m/s²`;
+        // Magnetometer
+        document.getElementById('magnetometer-x').textContent = `${lastEstimation.mag_x.toFixed(4)} μT`;
+        document.getElementById('magnetometer-y').textContent = `${lastEstimation.mag_y.toFixed(4)} μT`;
+        document.getElementById('magnetometer-z').textContent = `${lastEstimation.mag_z.toFixed(4)} μT`;
+        document.getElementById('magnetometer-strength').textContent = `${lastEstimation.mag_strength.toFixed(4)} μT`;
+        // Mouse integrated
+        document.getElementById('mouse-integrated-x').textContent = lastEstimation.mouse_integrated_x.toFixed(4);
+        document.getElementById('mouse-integrated-y').textContent = lastEstimation.mouse_integrated_y.toFixed(4);
+    }
+}
+
+function addReferenceTrajectory(name, points) {
+    // Extract position data
+    const xPositions = points.map(p => p.x);
+    const yPositions = points.map(p => p.y);
+    const zPositions = points.map(p => p.z);
+    
+    // Add the reference trajectory to the 3D plot
+    Plotly.addTraces('position-plot', {
+        type: 'scatter3d',
+        mode: 'lines',
+        x: xPositions,
+        y: yPositions,
+        z: zPositions,
+        line: {
+            width: 4,
+            color: '#fc6d26', // Different color for reference
+            opacity: 0.9
+        },
+        name: `Reference: ${name}`
+    });
+}
+
+function deleteRecording(recordingId) {
+    if (confirm('Are you sure you want to delete this recording? This action cannot be undone.')) {
+        fetch(`/api/delete_recording/${recordingId}`, {
+            method: 'DELETE'
+        })
         .then(response => response.json())
         .then(data => {
-            if (data.success && data.recording) {
-                // Display the reference trajectory on the position plot
-                Plotly.deleteTraces('position-plot', 0);
-                
-                // Get position data or use empty arrays if missing
-                const positionData = data.recording.data && data.recording.data.position ? data.recording.data.position : [];
-                const xData = positionData.length > 0 ? positionData.map(p => p.x || 0) : [];
-                const yData = positionData.length > 0 ? positionData.map(p => p.y || 0) : [];
-                const zData = positionData.length > 0 ? positionData.map(p => p.z || 0) : [];
-                
-                Plotly.addTraces('position-plot', [
-                    {
-                        type: 'scatter3d',
-                        mode: 'lines+markers',
-                        x: xData,
-                        y: yData,
-                        z: zData,
-                        marker: { size: 3, color: 'green' },
-                        line: { width: 2, color: 'green' },
-                        name: 'Reference Trajectory'
-                    },
-                    {
-                        type: 'scatter3d',
-                        mode: 'lines+markers',
-                        x: [],
-                        y: [],
-                        z: [],
-                        marker: { size: 3, color: 'blue' },
-                        line: { width: 2, color: 'blue' },
-                        name: 'Current Trajectory'
-                    }
-                ]);
-                
-                // Store reference data for comparison
-                window.referenceData = data.recording;
-                
-                alert(`Loaded recording: ${data.recording.name}`);
+            if (data.success) {
+                alert('Recording deleted successfully');
+                // Refresh the recordings list
+                showRecordingsList();
             } else {
-                alert('Failed to load recording: ' + (data.error || 'Unknown error'));
+                alert(`Error deleting recording: ${data.error || 'Unknown error'}`);
             }
         })
         .catch(error => {
-            console.error('Error loading recording:', error);
-            alert('Error loading recording. See console for details.');
+            console.error('Error deleting recording:', error);
+            alert('Error deleting recording. See console for details.');
         });
+    }
+}
+
+function showToast(message) {
+    // Create toast container if it doesn't exist
+    let toast = document.getElementById('toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast';
+        document.body.appendChild(toast);
+    }
+    
+    // Set message and show toast
+    toast.textContent = message;
+    toast.className = 'show';
+    
+    // Hide toast after 3 seconds
+    setTimeout(() => {
+        toast.className = '';
+    }, 3000);
 }
 
 // Theme management functions

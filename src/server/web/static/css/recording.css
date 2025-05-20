@@ -1,0 +1,200 @@
+/* Recording and playback indicators */
+.recording-indicator {
+    display: none; /* Initially hidden */
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: var(--error-color);
+    color: white;
+    padding: 8px 12px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    align-items: center;
+    gap: 10px;
+    z-index: 1000;
+    animation: pulse 1.5s infinite;
+}
+
+.recording-indicator i {
+    font-size: 18px;
+}
+
+.recording-counter {
+    margin-left: 5px;
+    font-weight: 500;
+}
+
+.recording-playback-indicator {
+    display: none; /* Initially hidden */
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: var(--accent-color);
+    color: white;
+    padding: 8px 12px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    align-items: center;
+    gap: 10px;
+    z-index: 1000;
+}
+
+.recording-playback-indicator i {
+    font-size: 18px;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
+/* Recording button style */
+#record-button.recording {
+    background-color: var(--error-color);
+    border-color: var(--error-color);
+}
+
+#record-button.recording:hover {
+    background-color: #d73a31;
+    border-color: #d73a31;
+}
+
+/* Toast notifications */
+#toast {
+    visibility: hidden;
+    min-width: 300px;
+    background-color: var(--card-background);
+    color: var(--text-color);
+    text-align: center;
+    border-radius: var(--border-radius);
+    padding: 16px;
+    position: fixed;
+    z-index: 1001;
+    left: 50%;
+    bottom: 30px;
+    transform: translateX(-50%);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--card-border);
+}
+
+#toast.show {
+    visibility: visible;
+    animation: fadeIn 0.5s, fadeOut 0.5s 2.5s;
+}
+
+@keyframes fadeIn {
+    from { bottom: 0; opacity: 0; }
+    to { bottom: 30px; opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { bottom: 30px; opacity: 1; }
+    to { bottom: 0; opacity: 0; }
+}
+
+/* Recordings list modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.7);
+    animation: fadeIn 0.3s;
+}
+
+.modal-content {
+    background-color: var(--card-background);
+    margin: 10% auto;
+    padding: 0;
+    border: 1px solid var(--card-border);
+    width: 80%;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    max-width: 1000px;
+    animation: slideDown 0.3s;
+}
+
+.modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--card-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-body {
+    padding: 20px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.close-button {
+    color: var(--text-secondary);
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-button:hover {
+    color: var(--text-color);
+}
+
+.recordings-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.recordings-table th,
+.recordings-table td {
+    text-align: left;
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.recordings-table thead th {
+    background-color: rgba(255, 255, 255, 0.05);
+    position: sticky;
+    top: 0;
+}
+
+.recordings-table tr:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.recordings-table button {
+    margin-right: 5px;
+    padding: 5px 10px;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--card-border);
+    background-color: transparent;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all var(--transition-speed);
+}
+
+.recordings-table button:hover {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.recordings-table button:nth-child(2):hover {
+    background-color: var(--error-color);
+    border-color: var(--error-color);
+}
+
+.no-recordings {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-secondary);
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}

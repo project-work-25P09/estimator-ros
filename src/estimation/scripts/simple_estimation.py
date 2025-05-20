@@ -25,6 +25,8 @@ class EstimatorNode(Node):
         self.opt_int_x = 0.0
         self.opt_int_y = 0.0
 
+        self.latest_imu = None
+
         self.do_save = True
         self.do_save_imu = True
         self.do_save_optical = True
@@ -84,6 +86,9 @@ class EstimatorNode(Node):
             ]
         )
 
+        # Store the latest IMU data for acceleration values
+        self.latest_imu = imu_msg
+
         self.ekf.predict(a, w, o)
         self.publish_estimation()
         self.cb_imu_save(imu_msg)
@@ -106,11 +111,26 @@ class EstimatorNode(Node):
         est = Estimation()
         est.stamp = self.get_clock().now().to_msg()
 
+        # Get the latest position
         est.x, est.y, est.z = self.ekf.p.tolist()
+
+        # Use quaternion to euler conversion for roll, pitch, yaw
         roll, pitch, yaw = quaternion_to_euler(self.ekf.q)
         est.roll, est.pitch, est.yaw = roll, pitch, yaw
 
-        est.acc_x, est.acc_y, est.acc_z = self.ekf.b_a.tolist()
+        # Use raw accelerometer data from the latest IMU message if available
+        if self.latest_imu is not None:
+            est.acc_x = self.latest_imu.linear_acceleration.x
+            est.acc_y = self.latest_imu.linear_acceleration.y
+            est.acc_z = self.latest_imu.linear_acceleration.z
+            est.acc_yaw = self.latest_imu.angular_velocity.x
+            est.acc_pitch = self.latest_imu.angular_velocity.y
+            est.acc_roll = self.latest_imu.angular_velocity.z
+        else:
+            est.acc_x, est.acc_y, est.acc_z = 0.0, 0.0, 0.0
+            est.acc_yaw, est.acc_pitch, est.acc_roll = 0.0, 0.0, 0.0
+
+        # Use raw magnetometer data from the latest IMU message if available
         est.mag_x, est.mag_y, est.mag_z = 0.0, 0.0, 0.0
         est.mag_strength = 0.0
 
@@ -177,10 +197,8 @@ class EstimatorNode(Node):
             estimation.mag_y,
             estimation.mag_z,
             estimation.mag_strength,
-            estimation.mouse_movement,
-            estimation.mouse_speed,
-            estimation.mouse_direction,
-            estimation.mouse_distance,
+            estimation.mouse_integrated_x,
+            estimation.mouse_integrated_y,
         ]
         self.file_estimation.write(
             f"{ros_timestamp},{','.join(str(x) for x in data)}\n"
