@@ -19,7 +19,5 @@ float64 mag_y
 float64 mag_z
 float64 mag_strength
 
-float64 mouse_movement
-float64 mouse_speed
-float64 mouse_direction
-float64 mouse_distance
+float64 mouse_integrated_x
+float64 mouse_integrated_y
