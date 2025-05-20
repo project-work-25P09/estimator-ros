@@ -22,6 +22,9 @@ class EstimatorNode(Node):
         self.create_subscription(Imu, "/imu/data", self.imu_callback, 200)
         self.create_subscription(MagneticField, "/imu/mag", self.imu_mag_callback, 200)
 
+        self.opt_int_x = 0.0
+        self.opt_int_y = 0.0
+
         self.do_save = True
         self.do_save_imu = True
         self.do_save_optical = True
@@ -89,6 +92,8 @@ class EstimatorNode(Node):
         pass
 
     def optical_callback(self, opt_msg: Point):
+        self.opt_int_x += opt_msg.x
+        self.opt_int_y += opt_msg.y
         flow_x = opt_msg.x * self.optical_x_to_m
         flow_y = opt_msg.y * self.optical_y_to_m
 
@@ -110,10 +115,8 @@ class EstimatorNode(Node):
         est.mag_strength = 0.0
 
         # optical‐flow diagnostics
-        est.mouse_movement = 0.0
-        est.mouse_speed = math.hypot(est.x, est.y)
-        est.mouse_direction = math.atan2(est.y, est.x) if est.x or est.y else 0.0
-        est.mouse_distance = math.hypot(est.x, est.y)
+        est.mouse_integrated_x = self.opt_int_x
+        est.mouse_integrated_y = self.opt_int_y
 
         self.est_pub.publish(est)
         self.cb_estimation_save(est)
