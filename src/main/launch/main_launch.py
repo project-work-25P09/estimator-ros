@@ -30,14 +30,6 @@ def generate_launch_description():
         'microstrain_launch.py'
     )
 
-    # microstrain = Node(
-    #     package="microstrain_inertial_driver",
-    #     executable="microstrain_launch.py",
-    #     name="microstrain_inertial_node",
-    #     output="screen",
-    # )
-
-    # Define the hardware monitor launch path
     hw_monitor_path = os.path.join(
         get_package_share_directory('rpi_hw_monitor'),
         'launch',
@@ -64,12 +56,12 @@ def generate_launch_description():
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource([microstrain_path]),
             launch_arguments={
+                # TODO: absolute path should be in share directory
                 'params_file': '/home/project/estimator-ros/config/imu_params.yml'
             }.items()
         ),
     )
     
-    # Add hardware monitor launch
     ld.add_action(
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource([hw_monitor_path]),

@@ -28,3 +28,20 @@ ros2 run server start_server_dash.py
 ros2 launch rpi_hw_monitor hw_monitor_launch.py &
 ros2 topic echo /hw_status
 ```
+
+## Record and playback data
+
+Record to a ROS bag:
+
+```bash
+ros2 launch main main_launch.py &
+ros2 topic list
+ros2 bag record /imu/data /imu/mag /optical -o recorded_data
+```
+
+Playback with:
+
+```bash
+ros2 launch main no_sensors_launch.py &
+ros2 bag play recorded_data
+```
