@@ -23,7 +23,7 @@ bash Miniconda3-latest-Linux-aarch64.sh
 rm Miniconda3-latest-Linux-aarch64.sh
 ```
 
-# Install ROS Humble
+## Install ROS Humble
 
 Instructions for building ROS are modified from [https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html)
 
@@ -45,4 +45,19 @@ sudo apt update
 sudo apt install ros-humble-ros-base
 sudo apt install ros-dev-tools
 sudo apt install libopenblas-dev
+```
+
+## Increase boot time
+
+Reduce the cloud wait service to reduce boot time significantly.
+
+```bash
+sudo mkdir -p /etc/systemd/system/systemd-networkd-wait-online.service.d/
+cat <<EOF | sudo tee /etc/systemd/system/systemd-networkd-wait-online.service.d/timeout.conf
+[Service]
+TimeoutStartSec=5
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl restart systemd-networkd-wait-online.service
 ```

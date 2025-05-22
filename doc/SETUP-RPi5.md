@@ -23,7 +23,7 @@ bash Miniconda3-latest-Linux-aarch64.sh
 rm Miniconda3-latest-Linux-aarch64.sh
 ```
 
-# Install ROS Rolling
+## Install ROS Rolling
 
 ROS Rolling cannot seemingly be installed on the Raspberry Pi 5 through any supported means (or OS). Instructions for building ROS are modified from [https://lkseng.github.io/posts/2024/01/07/ros-2-humble-on-raspberrypi-5.html](https://lkseng.github.io/posts/2024/01/07/ros-2-humble-on-raspberrypi-5.html)
 

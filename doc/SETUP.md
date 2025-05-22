@@ -15,7 +15,7 @@ mkdir -p ~/.ssh
 echo temp.pub >> ~/.ssh/authorized_keys
 ```
 
-## User setup
+## User setup (if developing on target)
 
 It is recommended to use separate users, however for this project the users only serve to setup the git configs for each user.
 
