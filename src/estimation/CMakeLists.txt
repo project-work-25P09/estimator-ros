@@ -20,7 +20,7 @@ if(BUILD_TESTING)
 endif()
 
 install(PROGRAMS
-  "scripts/simple_estimation.py"
+  "scripts/estimator_node.py"
   DESTINATION lib/${PROJECT_NAME}
 )
 

@@ -3,7 +3,7 @@ import estimation_pkg.utils as utils
 import numpy as np
 from estimation.msg import Estimation, Measurements
 
-class InertialEKF(EKF):
+class SimpleEKF(EKF):
     def __init__(self, dt, Q, R_imu, R_opt, m_ref):
         self.dt = dt
         self.Q = Q
