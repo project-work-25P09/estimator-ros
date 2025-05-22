@@ -6,7 +6,4 @@ float64 mouse_integrated_x
 float64 mouse_integrated_y
 
 float64 magnetic_field_strength
-float64 imu_est_yaw
-float64 imu_est_pitch
-float64 imu_est_roll
-
+geometry_msgs/Vector4 est_orientation
