@@ -3,6 +3,7 @@ import estimation_pkg.utils as utils
 import numpy as np
 from estimation.msg import Estimation, Measurements
 
+
 class SimpleEKF(Estimator):
     def __init__(self, dt, Q, R_imu, R_opt, m_ref):
         self.dt = dt
@@ -11,18 +12,23 @@ class SimpleEKF(Estimator):
         self.R_opt = R_opt
         self.m_ref = m_ref
 
+        self.prev_opt_x = 0
+        self.prev_opt_y = 0
+        self.reset()
+
+    def reset(self):
+        # self.prev_opt_x = 0
+        # self.prev_opt_y = 0
+
         # State
-        self.p = np.zeros(3)       # position (x, y, z)
-        self.v = np.zeros(3)       # velocity (vx, vy, vz)
+        self.p = np.zeros(3)  # position (x, y, z)
+        self.v = np.zeros(3)  # velocity (vx, vy, vz)
         self.q = np.array([0.0, 0.0, 0.0, 1.0])  # orientation quaternion (x, y, z, w)
-        self.b_a = np.zeros(3)     # accelerometer bias
-        self.b_g = np.zeros(3)     # gyro bias
+        self.b_a = np.zeros(3)  # accelerometer bias
+        self.b_g = np.zeros(3)  # gyro bias
 
         # Covariance
         self.P = np.eye(15) * 1e-3
-
-        self.prev_opt_x = 0
-        self.prev_opt_y = 0
 
     def get_estimation_msg(self) -> Estimation:
         msg = Estimation()
