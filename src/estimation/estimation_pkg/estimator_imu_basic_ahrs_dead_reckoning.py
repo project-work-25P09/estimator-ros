@@ -14,7 +14,7 @@ class BasicAHRSDeadReckoningEstimator(Estimator):
         self.alpha = alpha
 
     def update_measurements(self, meas: Measurements):
-        current_time = rclpy.time.Time.from_msg(meas.header.stamp)
+        current_time = rclpy.time.Time.from_msg(meas.stamp)
         if self.prev_time is None:
             self.prev_time = current_time
             return

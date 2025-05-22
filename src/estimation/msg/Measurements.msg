@@ -1,3 +1,4 @@
+builtin_interfaces/Time stamp
 geometry_msgs/Vector3 acceleration
 geometry_msgs/Vector3 angular_velocity
 geometry_msgs/Vector3 magnetic_field

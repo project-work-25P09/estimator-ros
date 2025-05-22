@@ -30,7 +30,7 @@ class ComplementaryFilterDetectLiftEstimator(Estimator):
         self.optical_valid = True
 
     def update_measurements(self, meas: Measurements):
-        t = rclpy.time.Time.from_msg(meas.header.stamp)
+        t = rclpy.time.Time.from_msg(meas.stamp)
         if self.prev_time is None:
             self.prev_time = t
             self.prev_mouse_x = meas.mouse_integrated_x

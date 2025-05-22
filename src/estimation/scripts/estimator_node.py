@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import Point
+from geometry_msgs.msg import Point, Vector3, Quaternion
 from sensor_msgs.msg import Imu, MagneticField
 from estimation.msg import Estimation, Measurements
 import numpy as np
@@ -12,12 +12,16 @@ class EstimatorNode(Node):
     def __init__(self):
         super().__init__("estimator_node")
 
-        self.estimator = utils.get_estimator('imu_integrator')
+        self.estimator = utils.get_estimator('imu_dead_reckoning')
 
         self.imu_updated = False
         self.mag_updated = False
         self.opt_updated = False
         self.measurements = Measurements()
+
+        self.optical_x_to_m = 0.000017929959
+        self.optical_y_to_m = 0.000019627030
+
         self.publisher = self.create_publisher(Estimation, "/estimation", 10)
 
         self.create_subscription(Point, "/optical", self.optical_callback, 10)
@@ -53,14 +57,16 @@ class EstimatorNode(Node):
         )
 
         self.update_imu(acceleration, angular_velocity, orientation)
+
         self.imu_updated = True
         self.cb_measurement()
 
     def imu_mag_callback(self, mag_msg: MagneticField):
-        magnetic_field = np.array(mag_msg.magnetic_field)
-        magnetic_field_strength = np.norm(magnetic_field)
+        magnetic_field = np.array([
+            mag_msg.magnetic_field.x,mag_msg.magnetic_field.y, mag_msg.magnetic_field.z
+        ])
+        self.update_magnetic_field(magnetic_field)
 
-        self.update_magnetic_field(magnetic_field, magnetic_field_strength)
         self.mag_updated = True
         self.cb_measurement()
 
@@ -73,23 +79,25 @@ class EstimatorNode(Node):
         self.cb_measurement()
 
     def update_imu(self, acceleration, angular_velocity, orientation):
-        self.measurements.acceleration = acceleration
-        self.measurements.angular_velocity = angular_velocity
-        self.measurements.est_orientation = orientation
+        self.measurements.acceleration =  Vector3(**dict(zip(("x","y","z"), acceleration.tolist())))
+        self.measurements.angular_velocity = Vector3(**dict(zip(("x","y","z"), angular_velocity.tolist())))
+        self.measurements.est_orientation = Quaternion(**dict(zip(("x","y","z","w"), orientation.tolist())))
 
     def update_magnetic_field(self, magnetic_field):
-        self.measurements.magnetic_field = magnetic_field
-        self.measurements.magnetic_field_strength = np.norm(magnetic_field)
+        self.measurements.magnetic_field = Vector3(**dict(zip(("x","y","z"), magnetic_field.tolist())))
+        self.measurements.magnetic_field_strength = np.linalg.norm(magnetic_field)
 
     def update_optical(self, flow_x, flow_y):
-        self.measurements.mouse_integrated_x += flow_x
-        self.measurements.mouse_integrated_y += flow_y
+        self.measurements.mouse_integrated_x += float(flow_x)
+        self.measurements.mouse_integrated_y += float(flow_y)
 
     def cb_measurement(self):
         if self.imu_updated and self.mag_updated: # and self.opt_updated:
             self.imu_updated = False
             self.mag_updated = False
-            self.estimator.update_measurements(self.measurements)
+            self.measurements.stamp = self.get_clock().now().to_msg()
+            if self.estimator is not None:
+                self.estimator.update_measurements(self.measurements)
             self.publish_estimation()
 
     def publish_estimation(self):

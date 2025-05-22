@@ -12,11 +12,11 @@ class DeadReckoningEstimator(Estimator):
     def reset(self):
         self.p = np.zeros(3)
         self.v = np.zeros(3)
-        self.q = np.zeros([1.0, 0.0, 0.0, 0.0])
+        self.q = np.array([1.0, 0.0, 0.0, 0.0])
         self.prev_time = None
 
     def update_measurements(self, meas: Measurements):
-        current_time = rclpy.time.Time.from_msg(meas.header.stamp)
+        current_time = rclpy.time.Time.from_msg(meas.stamp)
         if self.prev_time is None:
             self.prev_time = current_time
             return
