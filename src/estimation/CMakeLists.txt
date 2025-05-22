@@ -28,6 +28,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Measurements.msg"
   "msg/Estimation.msg"
   "srv/SwitchEstimator.srv"
+  "srv/ResetEstimator.srv"
   DEPENDENCIES std_msgs geometry_msgs
 )
 

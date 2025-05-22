@@ -34,6 +34,7 @@ class EstimatorNode(Node):
         self.create_subscription(MagneticField, "/imu/mag", self.imu_mag_callback, 200)
         
         self.create_service(SwitchEstimator, 'switch_estimator', self.switch_estimator_callback)
+        self.create_service(ResetEstimator, 'reset_estimator', self.reset_estimator_callback)
 
         # TODO: reset service
 
@@ -126,6 +127,18 @@ class EstimatorNode(Node):
             self.get_logger().error(f"Failed to switch to estimator: {request.estimator_name}")
             response.success = False
             response.message = f"Invalid estimator name: {request.estimator_name}"
+        return response
+
+    def reset_estimator_callback(self, request, response):
+        if self.estimator is not None:
+            self.estimator.reset()
+            self.get_logger().info("Estimator reset.")
+            response.success = True
+            response.message = "Estimator reset."
+        else:
+            self.get_logger().error("Failed to reset estimator: Estimator is None.")
+            response.success = False
+            response.message = "Estimator is None."
         return response
 
 
