@@ -1,11 +1,16 @@
 import numpy as np
 import math
-from estimation_pkg.simple_ekf import SimpleEKF
+from estimation.estimation_pkg.estimator_simple_ekf import SimpleEKF
+from estimation.estimation_pkg.estimator_imu_dead_reckoning import DeadReckoningEstimator
 
 
-def get_ekf():
-    return SimpleEKF(1.0 / 200.0, np.eye(15), np.eye(3), np.eye(2), [0.0, 0.0, 0.0])
-
+def get_estimator(name):
+    if name == 'simple_ekf':
+        return SimpleEKF(1.0 / 200.0, np.eye(15), np.eye(3), np.eye(2), [0.0, 0.0, 0.0])
+    elif name == 'imu_dead_reckoning':
+        return DeadReckoningEstimator()
+    print(f"Invalid estimator name: {name}.")
+    return None
 
 def quaternion_normalize(q):
     q = np.array(q, dtype=float)
