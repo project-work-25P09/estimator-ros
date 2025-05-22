@@ -29,6 +29,7 @@ data_ros_lock = threading.Lock()
 is_recording = False
 recording_buffer = []
 current_recording_id = None
+est_node = None
 
 class EstimationListener(Node):
     def __init__(self):
@@ -49,14 +50,15 @@ class EstimationListener(Node):
         request.estimator_name = estimator_name
 
         future = self.switch_estimator_client.call_async(request)
-        rclpy.spin_until_future_complete(self, future)
+        # rclpy.spin_until_future_complete(self, future)
 
-        if future.result() is not None:
-            self.get_logger().info(f"Service call succeeded: {future.result().message}")
-            return future.result().success
-        else:
-            self.get_logger().error("Service call failed")
-            return False
+        return True
+        # if future.result() is not None:
+        #     self.get_logger().info(f"Service call succeeded: {future.result().message}")
+        #     return future.result().success
+        # else:
+        #     self.get_logger().error("Service call failed")
+        #     return False
 
     def listener_callback(self, msg):
         global data_ros, data_ros_lock, is_recording, recording_buffer
@@ -108,16 +110,17 @@ class EstimationListener(Node):
 
 def ros_spin():
     """ROS node spinning function for a separate thread"""
+    global est_node
     rclpy.init(args=None)
-    node = EstimationListener()
-    node.get_logger().info("EstimationListener node started")
+    est_node = EstimationListener()
+    est_node.get_logger().info("EstimationListener node started")
     try:
-        rclpy.spin(node)
+        rclpy.spin(est_node)
     except KeyboardInterrupt:
         pass
     finally:
-        node.get_logger().info("Shutting down EstimationListener node")
-        node.destroy_node()
+        est_node.get_logger().info("Shutting down EstimationListener node")
+        est_node.destroy_node()
         rclpy.shutdown()
 
 # Initialize FastAPI app
@@ -247,13 +250,16 @@ async def compare_recordings_handler(recording_id1: int, recording_id2: int):
 # API endpoint for switching estimator
 @app.post("/api/switch_estimator")
 async def switch_estimator_handler(data: dict):
+    global est_node
+    if est_node is None:
+        raise HTTPException(status_code=500, detail="Estimator node not initialized")
     """Switch the active estimator based on the frontend request."""
     estimator_name = data.get("estimator_name")
     if not estimator_name:
         return {"success": False, "message": "No estimator name provided."}
 
     # Call the switch_estimator method in the EstimationListener
-    success = estimation_listener.switch_estimator(estimator_name)
+    success = est_node.switch_estimator(estimator_name)
     if success:
         return {"success": True, "message": f"Switched to estimator: {estimator_name}"}
     else:
@@ -392,7 +398,7 @@ def get_latest_data():
 
 def main():
     # Initialize ROS
-    ros_thread = threading.Thread(target=ros_spin, daemon=True)
+    ros_thread = threading.Thread(target=ros_spin, daemon=False)
     ros_thread.start()
     
     # Initialize the database

@@ -55,7 +55,7 @@ class BasicAHRSDeadReckoningEstimator(Estimator):
         self.q = q_fused
 
         # 4. velocity and position update
-        R = utils.quaternion_to_mat(self.q)
+        R = utils.quaternion_to_rotation_matrix(self.q)
         a_w = R.dot(a_b) - np.array([0.0, 0.0, 9.81])
         self.v += a_w * dt
         self.p += self.v * dt

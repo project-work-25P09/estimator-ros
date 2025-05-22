@@ -38,7 +38,7 @@ class ComplementaryFilterEstimator(Estimator):
             [meas.angular_velocity.x, meas.angular_velocity.y, meas.angular_velocity.z]
         )
 
-        R = utils.quaternion_to_mat(self.q)
+        R = utils.quaternion_to_rotation_matrix(self.q)
         a_w = R.dot(a_b) - np.array([0.0, 0.0, 9.81])
 
         self.v += a_w * dt

@@ -43,6 +43,10 @@ class SimpleEKF(Estimator):
         a = meas.acceleration
         w = meas.angular_velocity
         o = meas.est_orientation
+        
+        a = np.array([a.x, a.y, a.z])
+        w = np.array([w.x, w.y, w.z])
+        o = np.array([o.x, o.y, o.z, o.w])
 
         self.update_optical(meas.mouse_integrated_x, meas.mouse_integrated_y)
 

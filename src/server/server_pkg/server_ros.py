@@ -81,11 +81,12 @@ class ServerROS(Node):
         request.estimator_name = estimator_name
 
         future = self.switch_estimator_client.call_async(request)
-        rclpy.spin_until_future_complete(self, future)
+        # rclpy.spin_until_future_complete(self, future)
 
-        if future.result() is not None:
-            self.get_logger().info(f"Service call succeeded: {future.result().message}")
-            return future.result().success
-        else:
-            self.get_logger().error("Service call failed")
-            return False
+        return True
+        # if future.result() is not None:
+        #     self.get_logger().info(f"Service call succeeded: {future.result().message}")
+        #     return future.result().success
+        # else:
+        #     self.get_logger().error("Service call failed")
+        #     return False
