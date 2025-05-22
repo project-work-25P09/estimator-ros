@@ -513,7 +513,7 @@ function setupEventListeners() {
             }
         })
 
-        setInterval(() => {
+        setTimeout(() => {
             // Clear all the charts
             Plotly.deleteTraces('position-plot', 0);
             Plotly.addTraces('position-plot', {
