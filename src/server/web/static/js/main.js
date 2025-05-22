@@ -506,53 +506,55 @@ function setupEventListeners() {
     
     // Reset button
     document.getElementById('reset-button').addEventListener('click', function() {
-        // Clear all the charts
-        Plotly.deleteTraces('position-plot', 0);
-        Plotly.addTraces('position-plot', {
-            type: 'scatter3d',
-            mode: 'lines+markers',
-            x: [],
-            y: [],
-            z: [],
-            marker: { size: 4, color: '#58a6ff', opacity: 0.8 },
-            line: { width: 3, color: '#58a6ff', opacity: 0.7 },
-            name: 'Current Trajectory'
-        });
-        
-        Plotly.deleteTraces('orientation-plot', [0, 1, 2]);
-        Plotly.addTraces('orientation-plot', [
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Roll', line: { color: '#f85149', width: 2 } },
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Pitch', line: { color: '#238636', width: 2 } },
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Yaw', line: { color: '#58a6ff', width: 2 } }
-        ]);
-        
-        Plotly.deleteTraces('acceleration-plot', [0, 1, 2]);
-        Plotly.addTraces('acceleration-plot', [
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Acc X', line: { color: '#f85149', width: 2 } },
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Acc Y', line: { color: '#238636', width: 2 } },
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Acc Z', line: { color: '#58a6ff', width: 2 } }
-        ]);
-        
-        Plotly.deleteTraces('magnetometer-plot', [0, 1, 2, 3]);
-        Plotly.addTraces('magnetometer-plot', [
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Mag X', line: { color: '#f85149', width: 2 } },
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Mag Y', line: { color: '#238636', width: 2 } },
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Mag Z', line: { color: '#58a6ff', width: 2 } },
-            { type: 'bar', x: [], y: [], name: 'Field', marker: { color: '#e3b341' }, opacity: 0.4, yaxis: 'y2' }
-        ]);
-        
-        Plotly.deleteTraces('mouse-plot', [0, 1]);
-        Plotly.addTraces('mouse-plot', [
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Integrated X', line: { color: '#238636', width: 2 } },
-            { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Integrated Y', line: { color: '#f85149', width: 2 } }
-        ]);
-
         fetch('/api/reset_estimator', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             }
         })
+
+        setInterval(() => {
+            // Clear all the charts
+            Plotly.deleteTraces('position-plot', 0);
+            Plotly.addTraces('position-plot', {
+                type: 'scatter3d',
+                mode: 'lines+markers',
+                x: [],
+                y: [],
+                z: [],
+                marker: { size: 4, color: '#58a6ff', opacity: 0.8 },
+                line: { width: 3, color: '#58a6ff', opacity: 0.7 },
+                name: 'Current Trajectory'
+            });
+            
+            Plotly.deleteTraces('orientation-plot', [0, 1, 2]);
+            Plotly.addTraces('orientation-plot', [
+                { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Roll', line: { color: '#f85149', width: 2 } },
+                { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Pitch', line: { color: '#238636', width: 2 } },
+                { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Yaw', line: { color: '#58a6ff', width: 2 } }
+            ]);
+            
+            Plotly.deleteTraces('acceleration-plot', [0, 1, 2]);
+            Plotly.addTraces('acceleration-plot', [
+                { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Acc X', line: { color: '#f85149', width: 2 } },
+                { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Acc Y', line: { color: '#238636', width: 2 } },
+                { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Acc Z', line: { color: '#58a6ff', width: 2 } }
+            ]);
+            
+            Plotly.deleteTraces('magnetometer-plot', [0, 1, 2, 3]);
+            Plotly.addTraces('magnetometer-plot', [
+                { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Mag X', line: { color: '#f85149', width: 2 } },
+                { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Mag Y', line: { color: '#238636', width: 2 } },
+                { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Mag Z', line: { color: '#58a6ff', width: 2 } },
+                { type: 'bar', x: [], y: [], name: 'Field', marker: { color: '#e3b341' }, opacity: 0.4, yaxis: 'y2' }
+            ]);
+            
+            Plotly.deleteTraces('mouse-plot', [0, 1]);
+            Plotly.addTraces('mouse-plot', [
+                { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Integrated X', line: { color: '#238636', width: 2 } },
+                { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Integrated Y', line: { color: '#f85149', width: 2 } }
+            ]);
+        }, 1000);
     });
     
     // Record button
