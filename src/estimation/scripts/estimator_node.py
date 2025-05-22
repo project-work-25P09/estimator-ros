@@ -6,7 +6,7 @@ from sensor_msgs.msg import Imu, MagneticField
 from estimation.msg import Estimation, Measurements
 import numpy as np
 import estimation_pkg.utils as utils
-from estimation.srv import SwitchEstimator
+from estimation.srv import SwitchEstimator, ResetEstimator
 
 
 class EstimatorNode(Node):
@@ -130,6 +130,7 @@ class EstimatorNode(Node):
         return response
 
     def reset_estimator_callback(self, request, response):
+        self.get_logger().info("Resetting estimator...")
         if self.estimator is not None:
             self.estimator.reset()
             self.get_logger().info("Estimator reset.")

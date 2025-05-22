@@ -21,7 +21,7 @@ from server_pkg.server_utils import ConnectionManager
 from server_pkg.server_api import APICommand, ServerAPI
 from server_pkg.server_db import init_db, save_recording, list_recordings, get_recording, delete_recording, compare_recordings, save_estimation_data, get_estimation_data, get_reference_trajectories, save_reference_trajectory
 
-from estimation.srv import SwitchEstimator
+from estimation.srv import SwitchEstimator, ResetEstimator
 
 # Global variables for data management
 data_ros = []
@@ -44,21 +44,21 @@ class EstimationListener(Node):
         self.switch_estimator_client = self.create_client(SwitchEstimator, 'switch_estimator')
         while not self.switch_estimator_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Waiting for switch_estimator service...')
+        self.reset_estimator_client = self.create_client(ResetEstimator, 'reset_estimator')
+        while not self.reset_estimator_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Waiting for reset_estimator service...')
 
     def switch_estimator(self, estimator_name):
         request = SwitchEstimator.Request()
         request.estimator_name = estimator_name
 
         future = self.switch_estimator_client.call_async(request)
-        # rclpy.spin_until_future_complete(self, future)
-
         return True
-        # if future.result() is not None:
-        #     self.get_logger().info(f"Service call succeeded: {future.result().message}")
-        #     return future.result().success
-        # else:
-        #     self.get_logger().error("Service call failed")
-        #     return False
+    
+    def reset_estimator(self):
+        request = ResetEstimator.Request()
+        future = self.reset_estimator_client.call_async(request)
+        return True
 
     def listener_callback(self, msg):
         global data_ros, data_ros_lock, is_recording, recording_buffer
@@ -264,6 +264,17 @@ async def switch_estimator_handler(data: dict):
         return {"success": True, "message": f"Switched to estimator: {estimator_name}"}
     else:
         return {"success": False, "message": f"Failed to switch to estimator: {estimator_name}"}
+    
+@app.post("/api/reset_estimator")
+async def reset_estimator_handler():
+    global est_node
+    if est_node is None:
+        raise HTTPException(status_code=500, detail="Estimator node not initialized")
+    success = est_node.reset_estimator()
+    if success:
+        return {"success": True, "message": "Estimator reset."}
+    else:
+        return {"success": False, "message": "Failed to reset estimator."}
 
 # WebSocket endpoint for real-time data streaming
 @app.websocket("/ws")
