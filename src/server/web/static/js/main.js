@@ -58,21 +58,21 @@ function initWebSocket() {
         } else if (data.type === "loaded_recording") {
             handleLoadedRecording(data);
         } else {
-            // Regular data update
+            // Update recording status and counter regardless of pause state
+            if (data.recording !== undefined) {
+                updateRecordingStatus(data.recording);
+                
+                // Update recording counter if available
+                if (data.recording && data.recording_data_points !== undefined) {
+                    document.getElementById('recording-counter').textContent = 
+                        `Recording: ${data.recording_data_points} data points`;
+                }
+            }
+            
+            // Only update charts and store data if not paused or playing a recording
             if (!isPaused && !isPlayingRecording) {
                 updateCharts(data);
                 updateDataStore(data);
-                
-                // Update recording status indicator if provided
-                if (data.recording !== undefined) {
-                    updateRecordingStatus(data.recording);
-                    
-                    // Update recording counter if available
-                    if (data.recording && data.recording_data_points !== undefined) {
-                        document.getElementById('recording-counter').textContent = 
-                            `Recording: ${data.recording_data_points} data points`;
-                    }
-                }
             }
         }
     });
@@ -726,6 +726,9 @@ function updateRecordingStatus(recording) {
         
         // Show recording indicator
         document.getElementById('recording-indicator').style.display = 'flex';
+        
+        // Initialize the recording counter to 0 when starting recording
+        document.getElementById('recording-counter').textContent = 'Recording: 0 data points';
         
         // Hide the recording list if it's open
         const recordingListModal = document.getElementById('recording-list-modal');
