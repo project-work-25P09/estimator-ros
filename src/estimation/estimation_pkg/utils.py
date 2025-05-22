@@ -1,19 +1,29 @@
 import numpy as np
 import math
 from estimation.estimation_pkg.estimator_simple_ekf import SimpleEKF
-from estimation.estimation_pkg.estimator_imu_dead_reckoning import DeadReckoningEstimator
-from estimation.estimation_pkg.estimator_imu_basic_ahrs_dead_reckoning import BasicAHRSDeadReckoningEstimator
+from estimation.estimation_pkg.estimator_imu_dead_reckoning import (
+    DeadReckoningEstimator,
+)
+from estimation.estimation_pkg.estimator_imu_basic_ahrs_dead_reckoning import (
+    BasicAHRSDeadReckoningEstimator,
+)
+from estimation.estimation_pkg.estimator_complementary_dead_reckoning import (
+    ComplementaryDeadReckoningEstimator,
+)
 
 
 def get_estimator(name):
-    if name == 'simple_ekf':
+    if name == "simple_ekf":
         return SimpleEKF(1.0 / 200.0, np.eye(15), np.eye(3), np.eye(2), [0.0, 0.0, 0.0])
-    elif name == 'imu_dead_reckoning':
+    elif name == "imu_dead_reckoning":
         return DeadReckoningEstimator()
-    elif name == 'imu_basic_ahrs_dead_reckoning':
+    elif name == "imu_basic_ahrs_dead_reckoning":
         return BasicAHRSDeadReckoningEstimator(alpha=0.02)
+    elif name == "complementary_dead_reckoning":
+        return ComplementaryDeadReckoningEstimator(kp=0.5)
     print(f"Invalid estimator name: {name}.")
     return None
+
 
 def quaternion_normalize(q):
     q = np.array(q, dtype=float)
