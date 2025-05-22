@@ -2,6 +2,7 @@ import numpy as np
 import math
 from estimation.estimation_pkg.estimator_simple_ekf import SimpleEKF
 from estimation.estimation_pkg.estimator_imu_dead_reckoning import DeadReckoningEstimator
+from estimation.estimation_pkg.estimator_imu_basic_ahrs_dead_reckoning import BasicAHRSDeadReckoningEstimator
 
 
 def get_estimator(name):
@@ -9,6 +10,8 @@ def get_estimator(name):
         return SimpleEKF(1.0 / 200.0, np.eye(15), np.eye(3), np.eye(2), [0.0, 0.0, 0.0])
     elif name == 'imu_dead_reckoning':
         return DeadReckoningEstimator()
+    elif name == 'imu_basic_ahrs_dead_reckoning':
+        return BasicAHRSDeadReckoningEstimator()
     print(f"Invalid estimator name: {name}.")
     return None
 

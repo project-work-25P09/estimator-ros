@@ -10,9 +10,11 @@
 * ui: 2D graphs for x,y,z similar to acceleration
 * ui: real plot (reference trajectory)
 * ui: akselit ei ole samassa skaalassa
+* ui: ability to choose from list of estimators
 
 * algo: ekf driftaa
 * algo: gravitaatio kompensaatio
 * algo: IMU kalibrointi
 
 * ros: estimator reset service
+* ros: change estimator service
