@@ -27,18 +27,6 @@ class EstimatorNode(Node):
 
         self.latest_imu = None
 
-        self.do_save = True
-        self.do_save_imu = True
-        self.do_save_optical = True
-        self.do_save_estimation = True
-        self.save_fp = "./data/trajectory002"
-        self.save_optical_fp = os.path.join(self.save_fp, "optical.csv")
-        self.save_imu_fp = os.path.join(self.save_fp, "imu.csv")
-        self.save_estimation_fp = os.path.join(self.save_fp, "estimation.csv")
-        self.file_optical = None
-        self.file_imu = None
-        self.file_estimation = None
-
         self.config_calibration_fp = "./config/calibration.yml"
         self.config_estimation_fp = "./config/est_params.yml"
 
@@ -59,8 +47,6 @@ class EstimatorNode(Node):
 
         self.ekf = InertialEKF(dt, Q, R_imu, R_opt, m_ref)
         self.get_logger().info("EstimatorNode started.")
-
-        self.start_saving()
 
     def imu_callback(self, imu_msg: Imu):
         a = np.array(
@@ -86,12 +72,10 @@ class EstimatorNode(Node):
             ]
         )
 
-        # Store the latest IMU data for acceleration values
         self.latest_imu = imu_msg
 
         self.ekf.predict(a, w, o)
         self.publish_estimation()
-        self.cb_imu_save(imu_msg)
 
     def imu_mag_callback(self, mag_msg: MagneticField):
         pass
@@ -105,7 +89,6 @@ class EstimatorNode(Node):
         self.ekf.update_optical(flow_x, flow_y)
 
         self.publish_estimation()
-        self.cb_optical_save(opt_msg)
 
     def publish_estimation(self):
         est = Estimation()
@@ -139,93 +122,6 @@ class EstimatorNode(Node):
         est.mouse_integrated_y = self.opt_int_y
 
         self.est_pub.publish(est)
-        self.cb_estimation_save(est)
-
-    def cb_imu_save(self, imu):
-        if not self.do_save or not self.do_save_imu:
-            return
-        # Use ROS timestamp from the IMU message
-        ros_timestamp = imu.header.stamp.sec + (imu.header.stamp.nanosec / 1e9)
-        data = [
-            imu.linear_acceleration.x,
-            imu.linear_acceleration.y,
-            imu.linear_acceleration.z,
-            imu.angular_velocity.x,
-            imu.angular_velocity.y,
-            imu.angular_velocity.z,
-            imu.orientation.x,
-            imu.orientation.y,
-            imu.orientation.z,
-            imu.orientation.w,
-        ]
-        self.file_imu.write(f"{ros_timestamp},{','.join(f'{x}' for x in data)}\n")
-
-    def cb_optical_save(self, optical):
-        if not self.do_save or not self.do_save_optical:
-            return
-        # Use current ROS time since Point messages don't have timestamps
-        ros_time = self.get_clock().now()
-        ros_timestamp = ros_time.seconds_nanoseconds()
-        ros_timestamp_sec = ros_timestamp[0] + (ros_timestamp[1] / 1e9)
-        data = [
-            optical.x,
-            optical.y,
-        ]
-        self.file_optical.write(
-            f"{ros_timestamp_sec},{','.join(str(x) for x in data)}\n"
-        )
-
-    def cb_estimation_save(self, estimation):
-        if not self.do_save or not self.do_save_estimation:
-            return
-        # Use ROS timestamp instead of system time
-        ros_timestamp = estimation.stamp.sec + (estimation.stamp.nanosec / 1e9)
-        data = [
-            estimation.x,
-            estimation.y,
-            estimation.z,
-            estimation.yaw,
-            estimation.pitch,
-            estimation.roll,
-            estimation.acc_x,
-            estimation.acc_y,
-            estimation.acc_z,
-            estimation.acc_yaw,
-            estimation.acc_pitch,
-            estimation.acc_roll,
-            estimation.mag_x,
-            estimation.mag_y,
-            estimation.mag_z,
-            estimation.mag_strength,
-            estimation.mouse_integrated_x,
-            estimation.mouse_integrated_y,
-        ]
-        self.file_estimation.write(
-            f"{ros_timestamp},{','.join(str(x) for x in data)}\n"
-        )
-
-    def start_saving(self):
-        self.get_logger().info(f"Started saving to {self.save_fp}")
-        if not os.path.exists(self.save_fp):
-            os.mkdir(self.save_fp)
-        if self.do_save_optical:
-            self.file_optical = open(self.save_optical_fp, "w")
-        if self.do_save_imu:
-            self.file_imu = open(self.save_imu_fp, "w")
-        if self.do_save_estimation:
-            self.file_estimation = open(self.save_estimation_fp, "w")
-
-    def end_saving(self):
-        self.get_logger().info(f"Ended saving to {self.save_fp}")
-        if self.file_optical is not None:
-            self.file_optical.close()
-            self.file_optical = None
-        if self.file_imu is not None:
-            self.file_imu.close()
-            self.file_imu = None
-        if self.file_estimation is not None:
-            self.file_estimation.close()
-            self.file_estimation = None
 
 
 def main(args=None):
