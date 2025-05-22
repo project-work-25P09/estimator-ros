@@ -1,9 +1,9 @@
-from estimation_pkg.ekf import EKF
+from estimation_pkg.estimator import Estimator
 import estimation_pkg.utils as utils
 import numpy as np
 from estimation.msg import Estimation, Measurements
 
-class SimpleEKF(EKF):
+class SimpleEKF(Estimator):
     def __init__(self, dt, Q, R_imu, R_opt, m_ref):
         self.dt = dt
         self.Q = Q
@@ -32,7 +32,8 @@ class SimpleEKF(EKF):
         msg.yaw, msg.pitch, msg.roll = utils.quaternion_to_euler(self.q)
         return msg
 
-    def predict(self, meas: Measurements):
+    # def predict(self, meas: Measurements):
+    def update_measurements(self, meas: Measurements):
         a = meas.acceleration
         w = meas.angular_velocity
         o = meas.est_orientation

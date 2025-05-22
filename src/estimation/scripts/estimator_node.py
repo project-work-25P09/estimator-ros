@@ -5,7 +5,7 @@ from geometry_msgs.msg import Point
 from sensor_msgs.msg import Imu, MagneticField
 from estimation.msg import Estimation, Measurements
 import numpy as np
-from estimation_pkg.ekf import EKF
+from estimation_pkg.estimator import Estimator
 import estimation_pkg.utils as utils
 
 
@@ -13,8 +13,11 @@ class EstimatorNode(Node):
     def __init__(self):
         super().__init__("estimator_node")
 
-        self.ekf = utils.get_ekf()
+        self.estimator = utils.get_estimator('imu_integrator')
 
+        self.imu_updated = False
+        self.mag_updated = False
+        self.opt_updated = False
         self.measurements = Measurements()
         self.publisher = self.create_publisher(Estimation, "/estimation", 10)
 
@@ -49,19 +52,24 @@ class EstimatorNode(Node):
         )
 
         self.update_imu(acceleration, angular_velocity, orientation)
-        self.publish_estimation()
+        self.imu_updated = True
+        self.cb_measurement()
 
     def imu_mag_callback(self, mag_msg: MagneticField):
         magnetic_field = np.array(mag_msg.magnetic_field)
         magnetic_field_strength = np.norm(magnetic_field)
+
         self.update_magnetic_field(magnetic_field, magnetic_field_strength)
-        self.publish_estimation()
+        self.mag_updated = True
+        self.cb_measurement()
 
     def optical_callback(self, opt_msg: Point):
         flow_x = opt_msg.x * self.optical_x_to_m
         flow_y = opt_msg.y * self.optical_y_to_m
         self.update_optical(flow_x, flow_y)
-        self.publish_estimation()
+
+        self.opt_updated = True
+        self.cb_measurement()
 
     def update_imu(self, acceleration, angular_velocity, orientation):
         self.measurements.acceleration = acceleration
@@ -75,6 +83,13 @@ class EstimatorNode(Node):
     def update_optical(self, flow_x, flow_y):
         self.measurements.mouse_integrated_x += flow_x
         self.measurements.mouse_integrated_y += flow_y
+
+    def cb_measurement(self):
+        if self.imu_updated and self.mag_updated: # and self.opt_updated:
+            self.imu_updated = False
+            self.mag_updated = False
+            self.estimator.update_measurements(self.measurements)
+            self.publish_estimation()
 
     def publish_estimation(self):
         est = self.ekf.get_estimation_msg()
