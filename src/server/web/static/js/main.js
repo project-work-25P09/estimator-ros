@@ -546,6 +546,13 @@ function setupEventListeners() {
             { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Integrated X', line: { color: '#238636', width: 2 } },
             { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Integrated Y', line: { color: '#f85149', width: 2 } }
         ]);
+
+        fetch('/api/reset_estimator', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
     });
     
     // Record button
