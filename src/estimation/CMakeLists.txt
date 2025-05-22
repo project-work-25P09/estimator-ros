@@ -27,6 +27,7 @@ install(PROGRAMS
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Measurements.msg"
   "msg/Estimation.msg"
+  "srv/SwitchEstimator.srv"
   DEPENDENCIES std_msgs geometry_msgs
 )
 

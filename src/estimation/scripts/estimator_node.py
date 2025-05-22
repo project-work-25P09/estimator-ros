@@ -6,6 +6,7 @@ from sensor_msgs.msg import Imu, MagneticField
 from estimation.msg import Estimation, Measurements
 import numpy as np
 import estimation_pkg.utils as utils
+from estimation.srv import SwitchEstimator
 
 
 class EstimatorNode(Node):
@@ -28,6 +29,8 @@ class EstimatorNode(Node):
         self.create_subscription(Imu, "/imu/data", self.imu_callback, 200)
         self.create_subscription(MagneticField, "/imu/mag", self.imu_mag_callback, 200)
         
+        self.create_service(SwitchEstimator, 'switch_estimator', self.switch_estimator_callback)
+
         # TODO: reset service
 
         self.get_logger().info("EstimatorNode started.")
@@ -105,6 +108,19 @@ class EstimatorNode(Node):
         est.stamp = self.get_clock().now().to_msg()
         est.measurements = self.measurements
         self.publisher.publish(est)
+
+    def switch_estimator_callback(self, request, response):
+        new_estimator = utils.get_estimator(request.estimator_name)
+        if new_estimator is not None:
+            self.estimator = new_estimator
+            self.get_logger().info(f"Switched to estimator: {request.estimator_name}")
+            response.success = True
+            response.message = f"Switched to estimator: {request.estimator_name}"
+        else:
+            self.get_logger().error(f"Failed to switch to estimator: {request.estimator_name}")
+            response.success = False
+            response.message = f"Invalid estimator name: {request.estimator_name}"
+        return response
 
 
 def main(args=None):
