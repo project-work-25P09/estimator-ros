@@ -11,7 +11,7 @@ def get_estimator(name):
     elif name == 'imu_dead_reckoning':
         return DeadReckoningEstimator()
     elif name == 'imu_basic_ahrs_dead_reckoning':
-        return BasicAHRSDeadReckoningEstimator()
+        return BasicAHRSDeadReckoningEstimator(alpha=0.02)
     print(f"Invalid estimator name: {name}.")
     return None
 
