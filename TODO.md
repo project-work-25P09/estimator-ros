@@ -18,3 +18,4 @@
 
 * ros: estimator reset service
 * ros: change estimator service
+* ros: measurement covariances from messages

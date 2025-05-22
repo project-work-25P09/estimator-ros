@@ -6,4 +6,4 @@ float64 mouse_integrated_x
 float64 mouse_integrated_y
 
 float64 magnetic_field_strength
-geometry_msgs/Vector4 est_orientation
+geometry_msgs/Quaternion est_orientation
