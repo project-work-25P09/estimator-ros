@@ -32,6 +32,16 @@ def get_estimator(name):
     return None
 
 
+def list_available_estimators():
+    return [
+        "simple_ekf",
+        "imu_dead_reckoning",
+        "imu_basic_ahrs_dead_reckoning",
+        "complementary_dead_reckoning",
+        "complementary_dead_reckoning_detect_lift",
+    ]
+
+
 def quaternion_normalize(q):
     q = np.array(q, dtype=float)
     return q / np.linalg.norm(q)

@@ -1,7 +1,9 @@
 from rclpy.node import Node
 from estimation.msg import Estimation
+from estimation.srv import SwitchEstimator
 from rpi_hw_monitor.msg import HardwareStatus
 
+import rclpy
 
 class ServerROS(Node):
     def __init__(self):
@@ -16,6 +18,10 @@ class ServerROS(Node):
         self.hw_monitor_subscription = self.create_subscription(
             HardwareStatus, "/hw_status", self.hw_monitor_callback, 10
         )
+
+        self.switch_estimator_client = self.create_client(SwitchEstimator, 'switch_estimator')
+        while not self.switch_estimator_client.wait_for_service(timeout_sec=10.0):
+            self.get_logger().info('Waiting for switch_estimator service...')
 
         # Initialize data storage
         self.latest_data = None
@@ -34,15 +40,15 @@ class ServerROS(Node):
             "yaw": msg.yaw,
             "pitch": msg.pitch,
             "roll": msg.roll,
-            "acc_x": msg.measurements.acc_x,
-            "acc_y": msg.measurements.acc_y,
-            "acc_z": msg.measurements.acc_z,
+            "acc_x": msg.measurements.acceleration.x,
+            "acc_y": msg.measurements.acceleration.y,
+            "acc_z": msg.measurements.acceleration.z,
             "acc_yaw": msg.yaw,  # TODO: change
             "acc_pitch": msg.pitch,
             "acc_roll": msg.roll,
-            "mag_x": msg.measurements.magnetic_field[0],
-            "mag_y": msg.measurements.magnetic_field[1],
-            "mag_z": msg.measurements.magnetic_field[2],
+            "mag_x": msg.measurements.magnetic_field.x,
+            "mag_y": msg.measurements.magnetic_field.y,
+            "mag_z": msg.measurements.magnetic_field.z,
             "mag_strength": msg.measurements.magnetic_field_strength,
             "mouse_integrated_x": msg.measurements.mouse_integrated_x,
             "mouse_integrated_y": msg.measurements.mouse_integrated_y,
@@ -68,3 +74,18 @@ class ServerROS(Node):
     def get_latest_hw_data(self):
         """Return the latest hardware monitor data"""
         return self.latest_hw_data
+
+    def switch_estimator(self, estimator_name):
+        """Switch the active estimator by calling the ROS service."""
+        request = SwitchEstimator.Request()
+        request.estimator_name = estimator_name
+
+        future = self.switch_estimator_client.call_async(request)
+        rclpy.spin_until_future_complete(self, future)
+
+        if future.result() is not None:
+            self.get_logger().info(f"Service call succeeded: {future.result().message}")
+            return future.result().success
+        else:
+            self.get_logger().error("Service call failed")
+            return False

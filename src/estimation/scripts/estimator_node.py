@@ -14,6 +14,10 @@ class EstimatorNode(Node):
         super().__init__("estimator_node")
 
         self.estimator = utils.get_estimator('imu_dead_reckoning')
+        if self.estimator is None:
+            self.get_logger().error("Failed to initialize estimator.")
+            rclpy.shutdown()
+            return
 
         self.imu_updated = False
         self.mag_updated = False
@@ -104,7 +108,9 @@ class EstimatorNode(Node):
             self.publish_estimation()
 
     def publish_estimation(self):
-        est = self.ekf.get_estimation_msg()
+        if self.estimator is None:
+            return
+        est = self.estimator.get_estimation_msg()
         est.stamp = self.get_clock().now().to_msg()
         est.measurements = self.measurements
         self.publisher.publish(est)

@@ -36,6 +36,17 @@
       <button id="reset-button"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
       <button id="record-button"><i class="bi bi-record-circle"></i> Start Recording</button>
       <button id="load-button"><i class="bi bi-folder-fill"></i> Load Recording</button>
+      <div class="estimator-selector">
+        <label for="estimator-dropdown">Select Estimator:</label>
+        <select id="estimator-dropdown">
+          <option value="simple_ekf">Simple EKF</option>
+          <option value="imu_dead_reckoning">IMU Dead Reckoning</option>
+          <option value="imu_basic_ahrs_dead_reckoning">IMU Basic AHRS Dead Reckoning</option>
+          <option value="complementary_dead_reckoning">Complementary Dead Reckoning</option>
+          <option value="complementary_dead_reckoning_detect_lift">Complementary Dead Reckoning Detect Lift</option>
+        </select>
+        <button id="apply-estimator-button">Apply</button>
+      </div>
     </div>
     
     <!-- Recording indicator -->

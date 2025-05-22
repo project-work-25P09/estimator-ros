@@ -18,7 +18,9 @@ from datetime import datetime
 
 from server_pkg.server_utils import ConnectionManager
 from server_pkg.server_api import APICommand, ServerAPI
-from server_pkg.server_db import init_db, save_recording, list_recordings, get_recording, delete_recording, compare_recordings, save_estimation_data, get_estimation_data, get_reference_trajectories
+from server_pkg.server_db import init_db, save_recording, list_recordings, get_recording, delete_recording, compare_recordings, save_estimation_data, get_estimation_data, get_reference_trajectories, save_reference_trajectory
+
+from estimation.srv import SwitchEstimator
 
 # Global variables for data management
 data_ros = []
@@ -26,8 +28,6 @@ data_ros_lock = threading.Lock()
 is_recording = False
 recording_buffer = []
 current_recording_id = None
-
-from estimation.srv import SwitchEstimator
 
 class EstimationListener(Node):
     def __init__(self):
@@ -72,29 +72,30 @@ class EstimationListener(Node):
                 "yaw": msg.yaw,
                 "pitch": msg.pitch,
                 "roll": msg.roll,
-                "acc_x": msg.acc_x,
-                "acc_y": msg.acc_y,
-                "acc_z": msg.acc_z,
-                "acc_yaw": msg.acc_yaw,
-                "acc_pitch": msg.acc_pitch,
-                "acc_roll": msg.acc_roll,
-                "mag_x": msg.mag_x,
-                "mag_y": msg.mag_y,
-                "mag_z": msg.mag_z,
-                "mag_strength": msg.mag_strength,
-                "mouse_integrated_x": msg.mouse_integrated_x,
-                "mouse_integrated_y": msg.mouse_integrated_y
+                "acc_x": msg.measurements.acceleration.x,
+                "acc_y": msg.measurements.acceleration.y,
+                "acc_z": msg.measurements.acceleration.z,
+                "acc_yaw": msg.measurements.acceleration.x, # todo
+                "acc_pitch": msg.measurements.acceleration.y, # todo
+                "acc_roll": msg.measurements.acceleration.z, # todo
+                "mag_x": msg.measurements.magnetic_field.x,
+                "mag_y": msg.measurements.magnetic_field.y,
+                "mag_z": msg.measurements.magnetic_field.z,
+                "mag_strength": msg.measurements.magnetic_field_strength,
+                "mouse_integrated_x": msg.measurements.mouse_integrated_x,
+                "mouse_integrated_y": msg.measurements.mouse_integrated_y
             }
             
             # Store the latest data
-            data_ros.append((
-                timestamp_sec,
-                msg.x, msg.y, msg.z, msg.yaw, msg.pitch, msg.roll, 
-                msg.acc_x, msg.acc_y, msg.acc_z, msg.acc_yaw, msg.acc_pitch, msg.acc_roll, 
-                msg.mag_x, msg.mag_y, msg.mag_z, msg.mag_strength, 
-                msg.mouse_integrated_x, msg.mouse_integrated_y
-            ))
-            
+            data_ros.append([
+                msg.x, msg.y, msg.z, msg.yaw, msg.pitch, msg.roll,
+                msg.measurements.acceleration.x, msg.measurements.acceleration.y, msg.measurements.acceleration.z,
+                msg.measurements.acceleration.x, msg.measurements.acceleration.y, msg.measurements.acceleration.z, # todo
+                msg.measurements.magnetic_field.x, msg.measurements.magnetic_field.y, msg.measurements.magnetic_field.z,
+                msg.measurements.magnetic_field_strength,
+                msg.measurements.mouse_integrated_x, msg.measurements.mouse_integrated_y
+            ])
+
             # Store data in recording buffer if we're recording
             if is_recording:
                 recording_buffer.append(data_point)
@@ -238,6 +239,21 @@ async def delete_recording_handler(recording_id: int):
 async def compare_recordings_handler(recording_id1: int, recording_id2: int):
     """Compare two recordings and return statistics"""
     return compare_recordings(recording_id1, recording_id2)
+
+# API endpoint for switching estimator
+@app.post("/api/switch_estimator")
+async def switch_estimator_handler(data: dict):
+    """Switch the active estimator based on the frontend request."""
+    estimator_name = data.get("estimator_name")
+    if not estimator_name:
+        return {"success": False, "message": "No estimator name provided."}
+
+    # Call the switch_estimator method in the EstimationListener
+    success = estimation_listener.switch_estimator(estimator_name)
+    if success:
+        return {"success": True, "message": f"Switched to estimator: {estimator_name}"}
+    else:
+        return {"success": False, "message": f"Failed to switch to estimator: {estimator_name}"}
 
 # WebSocket endpoint for real-time data streaming
 @app.websocket("/ws")
