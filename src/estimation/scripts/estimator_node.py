@@ -5,7 +5,6 @@ from geometry_msgs.msg import Point
 from sensor_msgs.msg import Imu, MagneticField
 from estimation.msg import Estimation, Measurements
 import numpy as np
-from estimation_pkg.estimator import Estimator
 import estimation_pkg.utils as utils
 
 
