@@ -40,7 +40,7 @@ def generate_launch_description():
         optical,
         Node(
             package="estimation",
-            executable="simple_estimation.py",
+            executable="estimator_node.py",
             name="estimation_node",
             output="log",
         ),
