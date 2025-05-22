@@ -7,11 +7,11 @@ from estimation.estimation_pkg.estimator_imu_dead_reckoning import (
 from estimation.estimation_pkg.estimator_imu_basic_ahrs_dead_reckoning import (
     BasicAHRSDeadReckoningEstimator,
 )
-from estimation.estimation_pkg.estimator_complementary_dead_reckoning import (
-    ComplementaryDeadReckoningEstimator,
+from estimation.estimation_pkg.estimator_complementary_filter import (
+    ComplementaryFilterEstimator,
 )
-from estimation.estimation_pkg.estimator_complementary_dead_reckoning_detect_lift import (
-    ComplementaryDeadReckoningDetectLiftEstimator,
+from estimation.estimation_pkg.estimator_complementary_filter_detect_lift import (
+    ComplementaryFilterDetectLiftEstimator,
 )
 
 
@@ -23,9 +23,9 @@ def get_estimator(name):
     elif name == "imu_basic_ahrs_dead_reckoning":
         return BasicAHRSDeadReckoningEstimator(alpha=0.02)
     elif name == "complementary_dead_reckoning":
-        return ComplementaryDeadReckoningEstimator(kp=0.5)
+        return ComplementaryFilterEstimator(kp=0.5)
     elif name == "complementary_dead_reckoning_detect_lift":
-        return ComplementaryDeadReckoningDetectLiftEstimator(
+        return ComplementaryFilterDetectLiftEstimator(
             kp=0.5, optical_move_thresh=1e-4, imu_move_thresh=0.5
         )
     print(f"Invalid estimator name: {name}.")

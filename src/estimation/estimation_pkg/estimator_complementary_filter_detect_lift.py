@@ -5,7 +5,7 @@ from estimation.msg import Estimation, Measurements
 import rclpy
 
 
-class OpticalDeadReckoningEstimator(Estimator):
+class ComplementaryFilterDetectLiftEstimator(Estimator):
     def __init__(
         self,
         kp: float = 0.5,

@@ -5,7 +5,7 @@ from estimation.msg import Estimation, Measurements
 import rclpy
 
 
-class ComplementaryDeadReckoningEstimator(Estimator):
+class ComplementaryFilterEstimator(Estimator):
     def __init__(self, kp: float = 0.5):
         self.kp = kp
         self.reset()
