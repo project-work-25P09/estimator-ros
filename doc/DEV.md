@@ -45,3 +45,10 @@ Playback with:
 ros2 launch main no_sensors_launch.py &
 ros2 bag play recorded_data
 ```
+
+Playback on local machine:
+
+```bash
+ros2 launch main local_launc.py &
+ros2 bag play recorded_data
+````
