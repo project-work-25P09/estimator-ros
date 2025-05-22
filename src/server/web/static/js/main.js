@@ -502,6 +502,16 @@ function setupEventListeners() {
     document.getElementById('pause-button').addEventListener('click', function() {
         isPaused = !isPaused;
         this.innerHTML = isPaused ? '<i class="bi bi-play-fill"></i> Continue' : '<i class="bi bi-pause-fill"></i> Pause';
+        
+        // If continuing after a recording was loaded, reset the isPlayingRecording flag
+        if (!isPaused && isPlayingRecording) {
+            isPlayingRecording = false;
+            // Hide the playback indicator since we're going back to live data
+            document.getElementById('recording-playback-indicator').style.display = 'none';
+            
+            // Reset all charts to prepare for real-time data
+            resetCharts();
+        }
     });
     
     // Reset button
