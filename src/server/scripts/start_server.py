@@ -3,6 +3,7 @@ import os
 import asyncio
 import json
 import time
+import traceback
 import uvicorn
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.responses import StreamingResponse, JSONResponse
@@ -18,7 +19,9 @@ from datetime import datetime
 
 from server_pkg.server_utils import ConnectionManager
 from server_pkg.server_api import APICommand, ServerAPI
-from server_pkg.server_db import init_db, save_recording, list_recordings, get_recording, delete_recording, compare_recordings, save_estimation_data, get_estimation_data, get_reference_trajectories
+from server_pkg.server_db import init_db, save_recording, list_recordings, get_recording, delete_recording, compare_recordings, save_estimation_data, get_estimation_data, get_reference_trajectories, save_reference_trajectory
+
+from estimation.srv import SwitchEstimator
 
 # Global variables for data management
 data_ros = []
@@ -26,6 +29,7 @@ data_ros_lock = threading.Lock()
 is_recording = False
 recording_buffer = []
 current_recording_id = None
+est_node = None
 
 class EstimationListener(Node):
     def __init__(self):
@@ -36,6 +40,25 @@ class EstimationListener(Node):
             self.listener_callback,
             10
         )
+
+        self.switch_estimator_client = self.create_client(SwitchEstimator, 'switch_estimator')
+        while not self.switch_estimator_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Waiting for switch_estimator service...')
+
+    def switch_estimator(self, estimator_name):
+        request = SwitchEstimator.Request()
+        request.estimator_name = estimator_name
+
+        future = self.switch_estimator_client.call_async(request)
+        # rclpy.spin_until_future_complete(self, future)
+
+        return True
+        # if future.result() is not None:
+        #     self.get_logger().info(f"Service call succeeded: {future.result().message}")
+        #     return future.result().success
+        # else:
+        #     self.get_logger().error("Service call failed")
+        #     return False
 
     def listener_callback(self, msg):
         global data_ros, data_ros_lock, is_recording, recording_buffer
@@ -52,29 +75,31 @@ class EstimationListener(Node):
                 "yaw": msg.yaw,
                 "pitch": msg.pitch,
                 "roll": msg.roll,
-                "acc_x": msg.acc_x,
-                "acc_y": msg.acc_y,
-                "acc_z": msg.acc_z,
-                "acc_yaw": msg.acc_yaw,
-                "acc_pitch": msg.acc_pitch,
-                "acc_roll": msg.acc_roll,
-                "mag_x": msg.mag_x,
-                "mag_y": msg.mag_y,
-                "mag_z": msg.mag_z,
-                "mag_strength": msg.mag_strength,
-                "mouse_integrated_x": msg.mouse_integrated_x,
-                "mouse_integrated_y": msg.mouse_integrated_y
+                "acc_x": msg.measurements.acceleration.x,
+                "acc_y": msg.measurements.acceleration.y,
+                "acc_z": msg.measurements.acceleration.z,
+                "acc_yaw": msg.measurements.acceleration.x, # todo
+                "acc_pitch": msg.measurements.acceleration.y, # todo
+                "acc_roll": msg.measurements.acceleration.z, # todo
+                "mag_x": msg.measurements.magnetic_field.x,
+                "mag_y": msg.measurements.magnetic_field.y,
+                "mag_z": msg.measurements.magnetic_field.z,
+                "mag_strength": msg.measurements.magnetic_field_strength,
+                "mouse_integrated_x": msg.measurements.mouse_integrated_x,
+                "mouse_integrated_y": msg.measurements.mouse_integrated_y
             }
             
             # Store the latest data
-            data_ros.append((
+            data_ros.append([
                 timestamp_sec,
-                msg.x, msg.y, msg.z, msg.yaw, msg.pitch, msg.roll, 
-                msg.acc_x, msg.acc_y, msg.acc_z, msg.acc_yaw, msg.acc_pitch, msg.acc_roll, 
-                msg.mag_x, msg.mag_y, msg.mag_z, msg.mag_strength, 
-                msg.mouse_integrated_x, msg.mouse_integrated_y
-            ))
-            
+                msg.x, msg.y, msg.z, msg.yaw, msg.pitch, msg.roll,
+                msg.measurements.acceleration.x, msg.measurements.acceleration.y, msg.measurements.acceleration.z,
+                msg.measurements.acceleration.x, msg.measurements.acceleration.y, msg.measurements.acceleration.z, # todo
+                msg.measurements.magnetic_field.x, msg.measurements.magnetic_field.y, msg.measurements.magnetic_field.z,
+                msg.measurements.magnetic_field_strength,
+                msg.measurements.mouse_integrated_x, msg.measurements.mouse_integrated_y
+            ])
+
             # Store data in recording buffer if we're recording
             if is_recording:
                 recording_buffer.append(data_point)
@@ -85,14 +110,17 @@ class EstimationListener(Node):
 
 def ros_spin():
     """ROS node spinning function for a separate thread"""
+    global est_node
     rclpy.init(args=None)
-    node = EstimationListener()
+    est_node = EstimationListener()
+    est_node.get_logger().info("EstimationListener node started")
     try:
-        rclpy.spin(node)
+        rclpy.spin(est_node)
     except KeyboardInterrupt:
         pass
     finally:
-        node.destroy_node()
+        est_node.get_logger().info("Shutting down EstimationListener node")
+        est_node.destroy_node()
         rclpy.shutdown()
 
 # Initialize FastAPI app
@@ -219,6 +247,24 @@ async def compare_recordings_handler(recording_id1: int, recording_id2: int):
     """Compare two recordings and return statistics"""
     return compare_recordings(recording_id1, recording_id2)
 
+# API endpoint for switching estimator
+@app.post("/api/switch_estimator")
+async def switch_estimator_handler(data: dict):
+    global est_node
+    if est_node is None:
+        raise HTTPException(status_code=500, detail="Estimator node not initialized")
+    """Switch the active estimator based on the frontend request."""
+    estimator_name = data.get("estimator_name")
+    if not estimator_name:
+        return {"success": False, "message": "No estimator name provided."}
+
+    # Call the switch_estimator method in the EstimationListener
+    success = est_node.switch_estimator(estimator_name)
+    if success:
+        return {"success": True, "message": f"Switched to estimator: {estimator_name}"}
+    else:
+        return {"success": False, "message": f"Failed to switch to estimator: {estimator_name}"}
+
 # WebSocket endpoint for real-time data streaming
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -293,7 +339,13 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         api.connection_manager.disconnect(websocket)
     except Exception as e:
-        print(f"WebSocket error: {e}")
+        # print(f"WebSocket error: {e}")
+
+        tb = traceback.format_exc()
+        print("WebSocket error, full traceback:\n", tb)
+        # if you just want the exception and the line number of the *last* frame:
+        lineno = e.__traceback__.tb_lineno
+        print(f"Exception occurred at line {lineno}: {e}")
         api.connection_manager.disconnect(websocket)
 
 def get_latest_data():
@@ -346,7 +398,7 @@ def get_latest_data():
 
 def main():
     # Initialize ROS
-    ros_thread = threading.Thread(target=ros_spin, daemon=True)
+    ros_thread = threading.Thread(target=ros_spin, daemon=False)
     ros_thread.start()
     
     # Initialize the database

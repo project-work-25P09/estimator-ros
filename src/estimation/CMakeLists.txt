@@ -9,7 +9,7 @@ find_package(rclpy REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
-
+find_package(geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 
 if(BUILD_TESTING)
@@ -20,13 +20,15 @@ if(BUILD_TESTING)
 endif()
 
 install(PROGRAMS
-  "scripts/simple_estimation.py"
+  "scripts/estimator_node.py"
   DESTINATION lib/${PROJECT_NAME}
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/Measurements.msg"
   "msg/Estimation.msg"
-  DEPENDENCIES std_msgs
+  "srv/SwitchEstimator.srv"
+  DEPENDENCIES std_msgs geometry_msgs
 )
 
 ament_python_install_package(${PROJECT_NAME}_pkg)

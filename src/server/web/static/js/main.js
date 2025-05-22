@@ -592,6 +592,31 @@ function setupEventListeners() {
             document.getElementById('load-dialog').style.display = 'none';
         }
     });
+
+    document.getElementById('apply-estimator-button').addEventListener('click', function() {
+        const dropdown = document.getElementById('estimator-dropdown');
+        const selectedEstimator = dropdown.value;
+    
+        fetch('/api/switch_estimator', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ estimator_name: selectedEstimator })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`Successfully switched to estimator: ${selectedEstimator}`);
+            } else {
+                alert(`Failed to switch estimator: ${data.message}`);
+            }
+        })
+        .catch(error => {
+            console.error('Error switching estimator:', error);
+            alert('An error occurred while switching the estimator.');
+        });
+    });
 }
 
 function updateDataStore(data) {
