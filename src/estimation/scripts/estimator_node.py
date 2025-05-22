@@ -24,6 +24,8 @@ class EstimatorNode(Node):
         self.create_subscription(Point, "/optical", self.optical_callback, 10)
         self.create_subscription(Imu, "/imu/data", self.imu_callback, 200)
         self.create_subscription(MagneticField, "/imu/mag", self.imu_mag_callback, 200)
+        
+        # TODO: reset service
 
         self.get_logger().info("EstimatorNode started.")
 
