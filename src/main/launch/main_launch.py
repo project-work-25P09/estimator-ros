@@ -21,7 +21,7 @@ def generate_launch_description():
         executable="start_optical.py",
         name="optical_sensor_node",
         namespace="/",
-        output="log",
+        output="screen",
     )
     
     microstrain_path = os.path.join(
@@ -42,13 +42,13 @@ def generate_launch_description():
             package="estimation",
             executable="estimator_node.py",
             name="estimation_node",
-            output="log",
+            output="screen",
         ),
         Node(
             package="server",
             executable="start_server.py",
             name="server_node",
-            output="log",
+            output="screen",
         ),
     ])
 

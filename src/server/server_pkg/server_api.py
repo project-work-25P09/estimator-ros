@@ -54,8 +54,10 @@ class ServerAPI:
     def _ros2_thread(self):
         executor = rclpy.executors.MultiThreadedExecutor()
         executor.add_node(self.dashboard_ros)
+        self.dashboard_ros.get_logger().info("Starting EstimationListener node")
         try:
             executor.spin()
         finally:
+            self.get_logger().info("Shutting down EstimationListener node")
             self.dashboard_ros.destroy_node()
             rclpy.shutdown()

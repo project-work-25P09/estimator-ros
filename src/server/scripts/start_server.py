@@ -3,6 +3,7 @@ import os
 import asyncio
 import json
 import time
+import traceback
 import uvicorn
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.responses import StreamingResponse, JSONResponse
@@ -88,6 +89,7 @@ class EstimationListener(Node):
             
             # Store the latest data
             data_ros.append([
+                timestamp_sec,
                 msg.x, msg.y, msg.z, msg.yaw, msg.pitch, msg.roll,
                 msg.measurements.acceleration.x, msg.measurements.acceleration.y, msg.measurements.acceleration.z,
                 msg.measurements.acceleration.x, msg.measurements.acceleration.y, msg.measurements.acceleration.z, # todo
@@ -108,11 +110,13 @@ def ros_spin():
     """ROS node spinning function for a separate thread"""
     rclpy.init(args=None)
     node = EstimationListener()
+    node.get_logger().info("EstimationListener node started")
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
     finally:
+        node.get_logger().info("Shutting down EstimationListener node")
         node.destroy_node()
         rclpy.shutdown()
 
@@ -329,7 +333,13 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         api.connection_manager.disconnect(websocket)
     except Exception as e:
-        print(f"WebSocket error: {e}")
+        # print(f"WebSocket error: {e}")
+
+        tb = traceback.format_exc()
+        print("WebSocket error, full traceback:\n", tb)
+        # if you just want the exception and the line number of the *last* frame:
+        lineno = e.__traceback__.tb_lineno
+        print(f"Exception occurred at line {lineno}: {e}")
         api.connection_manager.disconnect(websocket)
 
 def get_latest_data():
