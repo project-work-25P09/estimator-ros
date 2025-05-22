@@ -27,6 +27,8 @@ is_recording = False
 recording_buffer = []
 current_recording_id = None
 
+from estimation.srv import SwitchEstimator
+
 class EstimationListener(Node):
     def __init__(self):
         super().__init__('estimation_listener')
@@ -36,6 +38,24 @@ class EstimationListener(Node):
             self.listener_callback,
             10
         )
+
+        self.switch_estimator_client = self.create_client(SwitchEstimator, 'switch_estimator')
+        while not self.switch_estimator_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Waiting for switch_estimator service...')
+
+    def switch_estimator(self, estimator_name):
+        request = SwitchEstimator.Request()
+        request.estimator_name = estimator_name
+
+        future = self.switch_estimator_client.call_async(request)
+        rclpy.spin_until_future_complete(self, future)
+
+        if future.result() is not None:
+            self.get_logger().info(f"Service call succeeded: {future.result().message}")
+            return future.result().success
+        else:
+            self.get_logger().error("Service call failed")
+            return False
 
     def listener_callback(self, msg):
         global data_ros, data_ros_lock, is_recording, recording_buffer
