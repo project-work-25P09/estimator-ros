@@ -25,6 +25,7 @@ install(PROGRAMS
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/Measurements.msg"
   "msg/Estimation.msg"
   DEPENDENCIES std_msgs
 )

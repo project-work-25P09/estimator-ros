@@ -1,0 +1,12 @@
+geometry_msgs/Vector3 acceleration
+geometry_msgs/Vector3 angular_velocity
+geometry_msgs/Vector3 magnetic_field
+
+float64 mouse_integrated_x
+float64 mouse_integrated_y
+
+float64 magnetic_field_strength
+float64 imu_est_yaw
+float64 imu_est_pitch
+float64 imu_est_roll
+
