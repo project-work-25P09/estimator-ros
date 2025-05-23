@@ -625,6 +625,11 @@ function setupEventListeners() {
             console.error('Error switching estimator:', error);
             alert('An error occurred while switching the estimator.');
         });
+
+        setTimeout(() => {
+            resetMeasurementData();
+            resetCharts();
+        }, 100);
     });
 }
 
