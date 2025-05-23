@@ -340,6 +340,9 @@ function updateCharts(data) {
     
     Plotly.extendTraces('position-plot', positionUpdate, [0], 10000);
     
+    // Update the 3D plot with equal axis scaling
+    updatePosition3DPlotWithEqualAxes();
+    
     // Orientation data update
     const orientationUpdate = {
         x: [[data.timestamp], [data.timestamp], [data.timestamp]],
@@ -527,6 +530,9 @@ function setupEventListeners() {
                 name: 'Current Trajectory'
             });
             
+            // Reset 3D plot axis ranges
+            resetPosition3DPlotScaling();
+            
             Plotly.deleteTraces('orientation-plot', [0, 1, 2]);
             Plotly.addTraces('orientation-plot', [
                 { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Roll', line: { color: '#f85149', width: 2 } },
@@ -570,10 +576,6 @@ function setupEventListeners() {
     
     // Load recording button
     document.getElementById('load-button').addEventListener('click', function() {
-        // Show the load recording dialog
-        // document.getElementById('load-dialog').style.display = 'block';
-        // Fetch available recordings
-        // fetchRecordings();
         showRecordingsList();
     });
     
@@ -996,6 +998,73 @@ function handleLoadedRecording(data) {
         data.recording.name || `Recording #${data.recording_id}`;
 }
 
+// Function to update 3D position plot with equal axis scaling
+function updatePosition3DPlotWithEqualAxes() {
+    const plot = document.getElementById('position-plot');
+    if (!plot || !plot.data || plot.data.length === 0) return;
+    
+    // Get all x, y, z points from the current trace
+    const xValues = plot.data[0].x;
+    const yValues = plot.data[0].y;
+    const zValues = plot.data[0].z;
+    
+    if (!xValues || !xValues.length) return;
+    
+    // Calculate the maximum distance from origin (0,0,0) in any direction
+    const xMaxDistance = Math.max(Math.abs(Math.min(...xValues)), Math.abs(Math.max(...xValues)));
+    const yMaxDistance = Math.max(Math.abs(Math.min(...yValues)), Math.abs(Math.max(...yValues)));
+    const zMaxDistance = Math.max(Math.abs(Math.min(...zValues)), Math.abs(Math.max(...zValues)));
+    
+    // Find the maximum distance in any dimension to ensure equal scaling
+    let maxDistance = Math.max(xMaxDistance, yMaxDistance, zMaxDistance);
+    
+    // Add padding (20% of the max distance)
+    const padding = maxDistance * 0.2;
+    maxDistance += padding;
+    
+    // Ensure we have some minimum scale even with points very close to origin
+    const minScale = 0.1;
+    maxDistance = Math.max(maxDistance, minScale);
+    
+    // Set the new layout with equal axis ranges centered at origin (0,0,0)
+    const newLayout = {
+        scene: {
+            aspectmode: 'cube',
+            xaxis: { 
+                range: [-maxDistance, maxDistance],
+                autorange: false
+            },
+            yaxis: { 
+                range: [-maxDistance, maxDistance],
+                autorange: false
+            },
+            zaxis: { 
+                range: [-maxDistance, maxDistance],
+                autorange: false
+            }
+        }
+    };
+    
+    // Update the layout
+    Plotly.relayout('position-plot', newLayout);
+}
+
+// Function to reset 3D position plot scaling
+function resetPosition3DPlotScaling() {
+    // Reset to a small default scale with auto-range enabled
+    const resetLayout = {
+        scene: {
+            aspectmode: 'cube',
+            xaxis: { autorange: true },
+            yaxis: { autorange: true },
+            zaxis: { autorange: true }
+        }
+    };
+    
+    Plotly.relayout('position-plot', resetLayout);
+}
+
+// Update plotRecordedTrajectory function to maintain equal scaling
 function plotRecordedTrajectory(estimations) {
     // Extract data for each chart
     const timestamps = estimations.map(e => e.timestamp);
@@ -1040,6 +1109,9 @@ function plotRecordedTrajectory(estimations) {
         },
         name: 'Estimated Trajectory'
     });
+    
+    // Apply equal axis scaling to the loaded trajectory
+    updatePosition3DPlotWithEqualAxes();
     
     // Plot orientation data
     Plotly.deleteTraces('orientation-plot', [0, 1, 2]);
