@@ -14,7 +14,7 @@ from estimation_pkg.estimator_complementary_filter_detect_lift import (
     ComplementaryFilterDetectLiftEstimator,
 )
 from estimation_pkg.estimator_optical import OpticalEstimator
-
+from estimation_pkg.estimator_optical_imu_integrator import OpticalImuIntegratorEstimator
 
 def get_estimator(name):
     if name == "simple_ekf":
@@ -31,6 +31,8 @@ def get_estimator(name):
         )
     elif name == "optical_dead_reckoning":
         return OpticalEstimator()
+    elif name == "optical_imu_integrator":
+        return OpticalImuIntegratorEstimator()
     print(f"Invalid estimator name: {name}.")
     return None
 
@@ -43,6 +45,7 @@ def list_available_estimators():
         "complementary_dead_reckoning",
         "complementary_dead_reckoning_detect_lift",
         "optical_dead_reckoning",
+        "optical_imu_integrator",
     ]
 
 
@@ -109,3 +112,11 @@ def euler_to_quaternion(roll, pitch, yaw):
     z = cr * cp * sy - sr * sp * cy
 
     return np.array([x, y, z, w])
+
+def quaternion_inverse(q):
+    x, y, z, w = q
+    norm_sq = x * x + y * y + z * z + w * w
+    if norm_sq < np.finfo(float).eps:
+        return np.zeros(4)
+    inv_norm_sq = 1.0 / norm_sq
+    return np.array([-x * inv_norm_sq, -y * inv_norm_sq, -z * inv_norm_sq, w * inv_norm_sq])

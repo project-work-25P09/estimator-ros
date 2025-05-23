@@ -338,7 +338,7 @@ function updateCharts(data) {
         z: [[data.z]]
     };
     
-    Plotly.extendTraces('position-plot', positionUpdate, [0], 100);
+    Plotly.extendTraces('position-plot', positionUpdate, [0], 10000);
     
     // Orientation data update
     const orientationUpdate = {
