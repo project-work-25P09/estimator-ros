@@ -138,6 +138,56 @@ function initCharts() {
         font: { color: '#f0f6fc' }
     }, { responsive: true });
     
+    // Position 2D plot (new)
+    charts.position2D = new Plotly.newPlot('position-2d-plot', [
+        {
+            type: 'scatter',
+            mode: 'lines',
+            x: [],
+            y: [],
+            name: 'Position X',
+            line: { color: '#f85149', width: 2 }
+        }, 
+        {
+            type: 'scatter',
+            mode: 'lines',
+            x: [],
+            y: [],
+            name: 'Position Y',
+            line: { color: '#238636', width: 2 }
+        },
+        {
+            type: 'scatter',
+            mode: 'lines',
+            x: [],
+            y: [],
+            name: 'Position Z',
+            line: { color: '#58a6ff', width: 2 }
+        }
+    ], {
+        xaxis: { 
+            title: 'Time (seconds)',
+            gridcolor: '#30363d',
+            zerolinecolor: '#8b949e' 
+        },
+        yaxis: { 
+            title: 'Position (m)',
+            gridcolor: '#30363d',
+            zerolinecolor: '#8b949e' 
+        },
+        legend: {
+            orientation: 'h',
+            yanchor: 'bottom',
+            y: 1.02,
+            xanchor: 'right',
+            x: 1
+        },
+        margin: { l: 50, r: 20, b: 50, t: 20 },
+        paper_bgcolor: 'rgba(0, 0, 0, 0)',
+        plot_bgcolor: 'rgba(0, 0, 0, 0)',
+        font: { color: '#f0f6fc' }
+    }, { responsive: true });
+    
     // Orientation plot
     charts.orientation = new Plotly.newPlot('orientation-plot', [{
         type: 'scatter',
@@ -340,6 +390,17 @@ function updateCharts(data) {
     
     Plotly.extendTraces('position-plot', positionUpdate, [0], 10000);
     
+    // Update the 3D plot with equal axis scaling
+    updatePosition3DPlotWithEqualAxes();
+    
+    // Position 2D data update
+    const position2DUpdate = {
+        x: [[data.timestamp], [data.timestamp], [data.timestamp]],
+        y: [[data.x], [data.y], [data.z]]
+    };
+    
+    Plotly.extendTraces('position-2d-plot', position2DUpdate, [0, 1, 2], 100);
+    
     // Orientation data update
     const orientationUpdate = {
         x: [[data.timestamp], [data.timestamp], [data.timestamp]],
@@ -527,6 +588,9 @@ function setupEventListeners() {
                 name: 'Current Trajectory'
             });
             
+            // Reset 3D plot axis ranges
+            resetPosition3DPlotScaling();
+            
             Plotly.deleteTraces('orientation-plot', [0, 1, 2]);
             Plotly.addTraces('orientation-plot', [
                 { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Roll', line: { color: '#f85149', width: 2 } },
@@ -547,6 +611,13 @@ function setupEventListeners() {
                 { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Mag Y', line: { color: '#238636', width: 2 } },
                 { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Mag Z', line: { color: '#58a6ff', width: 2 } },
                 { type: 'bar', x: [], y: [], name: 'Field', marker: { color: '#e3b341' }, opacity: 0.4, yaxis: 'y2' }
+            ]);
+            
+            Plotly.deleteTraces('position-2d-plot', [0, 1, 2]);
+            Plotly.addTraces('position-2d-plot', [
+                { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Position X', line: { color: '#f85149', width: 2 } },
+                { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Position Y', line: { color: '#238636', width: 2 } },
+                { type: 'scatter', mode: 'lines', x: [], y: [], name: 'Position Z', line: { color: '#58a6ff', width: 2 } }
             ]);
             
             Plotly.deleteTraces('mouse-plot', [0, 1]);
@@ -570,10 +641,6 @@ function setupEventListeners() {
     
     // Load recording button
     document.getElementById('load-button').addEventListener('click', function() {
-        // Show the load recording dialog
-        // document.getElementById('load-dialog').style.display = 'block';
-        // Fetch available recordings
-        // fetchRecordings();
         showRecordingsList();
     });
     
@@ -845,7 +912,7 @@ function resetCharts() {
     });
     
     // Reset other charts
-    ['orientation-plot', 'acceleration-plot', 'magnetometer-plot', 'mouse-plot'].forEach(plot => {
+    ['orientation-plot', 'acceleration-plot', 'magnetometer-plot', 'mouse-plot', 'position-2d-plot'].forEach(plot => {
         const traces = document.getElementById(plot).data;
         for (let i = 0; i < traces.length; i++) {
             Plotly.deleteTraces(plot, 0);
@@ -996,6 +1063,73 @@ function handleLoadedRecording(data) {
         data.recording.name || `Recording #${data.recording_id}`;
 }
 
+// Function to update 3D position plot with equal axis scaling
+function updatePosition3DPlotWithEqualAxes() {
+    const plot = document.getElementById('position-plot');
+    if (!plot || !plot.data || plot.data.length === 0) return;
+    
+    // Get all x, y, z points from the current trace
+    const xValues = plot.data[0].x;
+    const yValues = plot.data[0].y;
+    const zValues = plot.data[0].z;
+    
+    if (!xValues || !xValues.length) return;
+    
+    // Calculate the maximum distance from origin (0,0,0) in any direction
+    const xMaxDistance = Math.max(Math.abs(Math.min(...xValues)), Math.abs(Math.max(...xValues)));
+    const yMaxDistance = Math.max(Math.abs(Math.min(...yValues)), Math.abs(Math.max(...yValues)));
+    const zMaxDistance = Math.max(Math.abs(Math.min(...zValues)), Math.abs(Math.max(...zValues)));
+    
+    // Find the maximum distance in any dimension to ensure equal scaling
+    let maxDistance = Math.max(xMaxDistance, yMaxDistance, zMaxDistance);
+    
+    // Add padding (20% of the max distance)
+    const padding = maxDistance * 0.2;
+    maxDistance += padding;
+    
+    // Ensure we have some minimum scale even with points very close to origin
+    const minScale = 0.1;
+    maxDistance = Math.max(maxDistance, minScale);
+    
+    // Set the new layout with equal axis ranges centered at origin (0,0,0)
+    const newLayout = {
+        scene: {
+            aspectmode: 'cube',
+            xaxis: { 
+                range: [-maxDistance, maxDistance],
+                autorange: false
+            },
+            yaxis: { 
+                range: [-maxDistance, maxDistance],
+                autorange: false
+            },
+            zaxis: { 
+                range: [-maxDistance, maxDistance],
+                autorange: false
+            }
+        }
+    };
+    
+    // Update the layout
+    Plotly.relayout('position-plot', newLayout);
+}
+
+// Function to reset 3D position plot scaling
+function resetPosition3DPlotScaling() {
+    // Reset to a small default scale with auto-range enabled
+    const resetLayout = {
+        scene: {
+            aspectmode: 'cube',
+            xaxis: { autorange: true },
+            yaxis: { autorange: true },
+            zaxis: { autorange: true }
+        }
+    };
+    
+    Plotly.relayout('position-plot', resetLayout);
+}
+
+// Update plotRecordedTrajectory function to maintain equal scaling
 function plotRecordedTrajectory(estimations) {
     // Extract data for each chart
     const timestamps = estimations.map(e => e.timestamp);
@@ -1040,6 +1174,38 @@ function plotRecordedTrajectory(estimations) {
         },
         name: 'Estimated Trajectory'
     });
+    
+    // Apply equal axis scaling to the loaded trajectory
+    updatePosition3DPlotWithEqualAxes();
+    
+    // Plot position 2D data
+    Plotly.deleteTraces('position-2d-plot', [0, 1, 2]);
+    Plotly.addTraces('position-2d-plot', [
+        {
+            type: 'scatter',
+            mode: 'lines',
+            x: timestamps,
+            y: xPositions,
+            name: 'Position X',
+            line: { color: '#f85149', width: 2 }
+        },
+        {
+            type: 'scatter',
+            mode: 'lines',
+            x: timestamps,
+            y: yPositions,
+            name: 'Position Y',
+            line: { color: '#238636', width: 2 }
+        },
+        {
+            type: 'scatter',
+            mode: 'lines',
+            x: timestamps,
+            y: zPositions,
+            name: 'Position Z',
+            line: { color: '#58a6ff', width: 2 }
+        }
+    ]);
     
     // Plot orientation data
     Plotly.deleteTraces('orientation-plot', [0, 1, 2]);
@@ -1304,7 +1470,7 @@ function updatePlotStyles() {
     };
     
     // Apply to each plot
-    const plotIds = ['orientation-plot', 'acceleration-plot', 'magnetometer-plot', 'mouse-plot'];
+    const plotIds = ['orientation-plot', 'acceleration-plot', 'magnetometer-plot', 'mouse-plot', 'position-2d-plot'];
     plotIds.forEach(id => {
         Plotly.relayout(id, updateLayout);
     });
