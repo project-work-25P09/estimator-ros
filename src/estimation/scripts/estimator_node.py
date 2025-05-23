@@ -26,6 +26,7 @@ class EstimatorNode(Node):
 
         self.optical_x_to_m = 0.000017929959
         self.optical_y_to_m = 0.000019627030
+        self.orientation_bias = np.array([0.0, 0.0, 0.0, 1.0])
 
         self.publisher = self.create_publisher(Estimation, "/estimation", 10)
 
@@ -64,6 +65,11 @@ class EstimatorNode(Node):
             ]
         )
 
+        # Rotate with self.orientation_bias
+        # orientation = utils.quaternion_multiply(
+        #     orientation, self.orientation_bias
+        # )
+
         self.update_imu(acceleration, angular_velocity, orientation)
 
         self.imu_updated = True
@@ -89,7 +95,10 @@ class EstimatorNode(Node):
     def update_imu(self, acceleration, angular_velocity, orientation):
         self.measurements.acceleration =  Vector3(**dict(zip(("x","y","z"), acceleration.tolist())))
         self.measurements.angular_velocity = Vector3(**dict(zip(("x","y","z"), angular_velocity.tolist())))
-        self.measurements.est_orientation = Quaternion(**dict(zip(("x","y","z","w"), orientation.tolist())))
+        # self.measurements.est_orientation = Quaternion(**dict(zip(("x","y","z","w"), orientation.tolist())))
+        self.measurements.est_orientation = Quaternion(**{"x": orientation[0], "y": orientation[1], "z": orientation[2], "w": orientation[3]})
+
+        # TODO Correct with IMU bias
 
     def update_magnetic_field(self, magnetic_field):
         self.measurements.magnetic_field = Vector3(**dict(zip(("x","y","z"), magnetic_field.tolist())))
@@ -132,6 +141,7 @@ class EstimatorNode(Node):
     def reset_estimator_callback(self, request, response):
         self.get_logger().info("Resetting estimator...")
         if self.estimator is not None:
+            self.calibrate_imu()
             self.estimator.reset()
             self.get_logger().info("Estimator reset.")
             response.success = True
@@ -141,6 +151,21 @@ class EstimatorNode(Node):
             response.success = False
             response.message = "Estimator is None."
         return response
+
+    def calibrate_imu(self):
+        self.get_logger().info("Calibrating IMU...")
+        last_bias = self.orientation_bias
+        self.orientation_bias = np.array([
+            self.measurements.est_orientation.x,
+            self.measurements.est_orientation.y,
+            self.measurements.est_orientation.z,
+            self.measurements.est_orientation.w,
+        ])
+        self.orientation_bias = utils.quaternion_multiply(
+            last_bias,
+            utils.quaternion_inverse(self.orientation_bias)
+        )
+        self.get_logger().info(f"IMU calibration complete. {utils.quaternion_to_euler(self.orientation_bias)}")
 
 
 def main(args=None):

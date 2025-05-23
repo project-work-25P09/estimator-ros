@@ -12,7 +12,7 @@ class OpticalEstimator(Estimator):
     def reset(self):
         self.p = np.zeros(3)
         self.v = np.zeros(3)
-        self.q = np.array([1.0, 0.0, 0.0, 0.0])
+        self.q = np.array([0.0, 0.0, 0.0, 1.0])
         self.prev_time = None
         self.last_mouse_integrated_x = 0.0
         self.last_mouse_integrated_y = 0.0
@@ -31,6 +31,8 @@ class OpticalEstimator(Estimator):
 
         self.last_mouse_integrated_x = meas.mouse_integrated_x
         self.last_mouse_integrated_y = meas.mouse_integrated_y
+
+        self.q = np.array([meas.est_orientation.x, meas.est_orientation.y, meas.est_orientation.z, meas.est_orientation.w])
 
         self.p[0] += dx
         self.p[1] += dy

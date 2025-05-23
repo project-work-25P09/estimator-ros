@@ -12,7 +12,7 @@ class OpticalImuIntegratorEstimator(Estimator):
     def reset(self):
         self.p = np.zeros(3)
         self.v = np.zeros(3)
-        self.q = np.array([1.0, 0.0, 0.0, 0.0])
+        self.q = np.array([0.0, 0.0, 0.0, 1.0])
         self.prev_time = None
         self.last_mouse_integrated_x = 0.0
         self.last_mouse_integrated_y = 0.0
@@ -33,8 +33,8 @@ class OpticalImuIntegratorEstimator(Estimator):
         self.last_mouse_integrated_y = meas.mouse_integrated_y
 
         # Convert quaternion to rotation matrix
-        q = np.array([meas.est_orientation.x, meas.est_orientation.y, meas.est_orientation.z, meas.est_orientation.w])
-        rotation_matrix = utils.quaternion_to_rotation_matrix(q)
+        self.q = np.array([meas.est_orientation.x, meas.est_orientation.y, meas.est_orientation.z, meas.est_orientation.w])
+        rotation_matrix = utils.quaternion_to_rotation_matrix(self.q)
 
         # Optical flow vector in local frame
         optical_flow_local = np.array([-dx, dy, 0.0])
