@@ -13,6 +13,7 @@ from estimation_pkg.estimator_complementary_filter import (
 from estimation_pkg.estimator_complementary_filter_detect_lift import (
     ComplementaryFilterDetectLiftEstimator,
 )
+from estimation_pkg.estimator_optical import OpticalEstimator
 
 
 def get_estimator(name):
@@ -28,6 +29,8 @@ def get_estimator(name):
         return ComplementaryFilterDetectLiftEstimator(
             kp=0.5, optical_move_thresh=1e-4, imu_move_thresh=0.5
         )
+    elif name == "optical_dead_reckoning":
+        return OpticalEstimator()
     print(f"Invalid estimator name: {name}.")
     return None
 
@@ -39,6 +42,7 @@ def list_available_estimators():
         "imu_basic_ahrs_dead_reckoning",
         "complementary_dead_reckoning",
         "complementary_dead_reckoning_detect_lift",
+        "optical_dead_reckoning",
     ]
 
 
