@@ -13,7 +13,7 @@ class EstimatorNode(Node):
     def __init__(self):
         super().__init__("estimator_node")
 
-        self.estimator = utils.get_estimator('imu_dead_reckoning')
+        self.estimator = utils.get_estimator('optical_imu_integrator')
         if self.estimator is None:
             self.get_logger().error("Failed to initialize estimator.")
             rclpy.shutdown()
