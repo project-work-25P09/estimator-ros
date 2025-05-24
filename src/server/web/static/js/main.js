@@ -1247,17 +1247,35 @@ function updatePosition3DPlotWithEqualAxes() {
     const plot = document.getElementById('position-plot');
     if (!plot || !plot.data || plot.data.length === 0) return;
     
-    // Get all x, y, z points from the current trace
-    const xValues = plot.data[0].x;
-    const yValues = plot.data[0].y;
-    const zValues = plot.data[0].z;
+    // Initialize the min and max values for each axis
+    let xMin = 0, xMax = 0, yMin = 0, yMax = 0, zMin = 0, zMax = 0;
+    let hasPoints = false;
     
-    if (!xValues || !xValues.length) return;
+    // Iterate through all traces in the plot (current trajectory and reference trajectories)
+    for (let i = 0; i < plot.data.length; i++) {
+        const trace = plot.data[i];
+        const xValues = trace.x;
+        const yValues = trace.y;
+        const zValues = trace.z;
+        
+        if (xValues && xValues.length) {
+            hasPoints = true;
+            // Update min and max values for each axis
+            xMin = Math.min(xMin, Math.min(...xValues));
+            xMax = Math.max(xMax, Math.max(...xValues));
+            yMin = Math.min(yMin, Math.min(...yValues));
+            yMax = Math.max(yMax, Math.max(...yValues));
+            zMin = Math.min(zMin, Math.min(...zValues));
+            zMax = Math.max(zMax, Math.max(...zValues));
+        }
+    }
+    
+    if (!hasPoints) return;
     
     // Calculate the maximum distance from origin (0,0,0) in any direction
-    const xMaxDistance = Math.max(Math.abs(Math.min(...xValues)), Math.abs(Math.max(...xValues)));
-    const yMaxDistance = Math.max(Math.abs(Math.min(...yValues)), Math.abs(Math.max(...yValues)));
-    const zMaxDistance = Math.max(Math.abs(Math.min(...zValues)), Math.abs(Math.max(...zValues)));
+    const xMaxDistance = Math.max(Math.abs(xMin), Math.abs(xMax));
+    const yMaxDistance = Math.max(Math.abs(yMin), Math.abs(yMax));
+    const zMaxDistance = Math.max(Math.abs(zMin), Math.abs(zMax));
     
     // Find the maximum distance in any dimension to ensure equal scaling
     let maxDistance = Math.max(xMaxDistance, yMaxDistance, zMaxDistance);
@@ -1605,6 +1623,9 @@ function addReferenceTrajectory(name, points) {
         },
         name: `Reference: ${name}`
     });
+    
+    // Update the 3D plot with equal axis scaling to include the reference trajectory
+    updatePosition3DPlotWithEqualAxes();
 }
 
 function deleteRecording(recordingId) {
