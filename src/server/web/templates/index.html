@@ -34,8 +34,10 @@
       </select>
       <button id="pause-button"><i class="bi bi-pause-fill"></i> Pause</button>
       <button id="reset-button"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+      <button id="reset-measurements-button"><i class="bi bi-arrow-repeat"></i> Reset Measurements Only</button>
       <button id="record-button"><i class="bi bi-record-circle"></i> Start Recording</button>
       <button id="load-button"><i class="bi bi-folder-fill"></i> Load Recording</button>
+      <button id="load-reference-csv-button"><i class="bi bi-file-earmark-text"></i> Load Reference from CSV</button>
       <div class="estimator-selector">
         <label for="estimator-dropdown">Select Estimator:</label>
         <select id="estimator-dropdown">
@@ -212,6 +214,32 @@
       </div>
       <div class="dialog-footer">
         <button id="load-recording-btn"><i class="bi bi-play-fill"></i> Load</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reference Trajectory Dialog -->
+  <div id="reference-dialog" class="dialog">
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <h3><i class="bi bi-database"></i> Reference Trajectories</h3>
+        <button id="close-reference-dialog" class="close-button">&times;</button>
+      </div>
+      <div class="dialog-body">
+        <table class="reference-table" style="width: 100%;">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Points</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="reference-tbody">
+            <tr>
+              <td colspan="3">Loading reference trajectories...</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>

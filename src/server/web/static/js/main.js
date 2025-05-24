@@ -572,6 +572,92 @@ function updateDataStore(data) {
     }
 }
 
+// Theme management functions
+function initializeTheme() {
+    // Check for saved theme preference or use device preference
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+        document.body.classList.toggle('light-theme', savedTheme === 'light');
+        updateThemeIcon(savedTheme === 'light');
+    } else {
+        // Use device preference
+        const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.body.classList.toggle('light-theme', !prefersDarkScheme);
+        updateThemeIcon(!prefersDarkScheme);
+    }
+    
+    // Update plot styles to match theme
+    updatePlotStyles();
+}
+
+function toggleTheme() {
+    const isLightTheme = document.body.classList.toggle('light-theme');
+    localStorage.setItem('theme', isLightTheme ? 'light' : 'dark');
+    updateThemeIcon(isLightTheme);
+    
+    // Update plot styles to match theme
+    updatePlotStyles();
+}
+
+function updateThemeIcon(isLightTheme) {
+    const themeIcon = document.querySelector('#theme-toggle i');
+    if (themeIcon) {
+        themeIcon.className = isLightTheme ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+    }
+}
+
+function updatePlotStyles() {
+    const isLightTheme = document.body.classList.contains('light-theme');
+    
+    // Colors for light and dark themes
+    const gridColor = isLightTheme ? '#dfe5ec' : '#30363d';
+    const zeroLineColor = isLightTheme ? '#57606a' : '#8b949e';
+    const fontColor = isLightTheme ? '#24292f' : '#f0f6fc';
+    
+    // Update each plot with new theme colors
+    const plotIds = ['orientation-plot', 'acceleration-plot', 'magnetometer-plot', 'mouse-plot', 'position-2d-plot'];
+    plotIds.forEach(id => {
+        try {
+            Plotly.relayout(id, {
+                xaxis: { 
+                    gridcolor: gridColor,
+                    zerolinecolor: zeroLineColor
+                },
+                yaxis: { 
+                    gridcolor: gridColor,
+                    zerolinecolor: zeroLineColor 
+                },
+                font: { color: fontColor }
+            });
+        } catch (e) {
+            console.warn(`Could not update styles for plot ${id}:`, e);
+        }
+    });
+    
+    // Special update for 3D plot
+    try {
+        Plotly.relayout('position-plot', {
+            scene: {
+                xaxis: { 
+                    gridcolor: gridColor,
+                    zerolinecolor: zeroLineColor
+                },
+                yaxis: { 
+                    gridcolor: gridColor,
+                    zerolinecolor: zeroLineColor
+                },
+                zaxis: { 
+                    gridcolor: gridColor,
+                    zerolinecolor: zeroLineColor
+                }
+            },
+            font: { color: fontColor }
+        });
+    } catch (e) {
+        console.warn('Could not update styles for 3D plot:', e);
+    }
+}
+
 function setupEventListeners() {
     // Initialize theme from local storage or default to dark
     initializeTheme();
@@ -598,6 +684,9 @@ function setupEventListeners() {
         
         // Reset the first timestamp to null so a new one will be captured
         firstTimestamp = null;
+        
+        // Clear reference trajectories
+        referenceTrajectories = {};
 
         setTimeout(() => {
             // Clear all the charts
@@ -662,6 +751,24 @@ function setupEventListeners() {
         }, 1000);
     });
     
+    // Reset Measurements Only button
+    document.getElementById('reset-measurements-button').addEventListener('click', function() {
+        fetch('/api/reset_estimator', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        // Reset just the measurements while keeping reference trajectories
+        resetMeasurementsOnly();
+    });
+    
+    // Load Reference from CSV button
+    document.getElementById('load-reference-csv-button').addEventListener('click', function() {
+        loadReferenceFromCSV();
+    });
+    
     // Record button
     document.getElementById('record-button').addEventListener('click', function() {
         if (!isRecording) {
@@ -681,6 +788,11 @@ function setupEventListeners() {
     // Close dialog button
     document.getElementById('close-dialog').addEventListener('click', function() {
         document.getElementById('load-dialog').style.display = 'none';
+    });
+    
+    // Close reference dialog button
+    document.getElementById('close-reference-dialog').addEventListener('click', function() {
+        document.getElementById('reference-dialog').style.display = 'none';
     });
     
     // Interval selection dropdown
@@ -799,29 +911,35 @@ function updateDataStore(data) {
         }
     });
     
-    // Update data displays
-    document.getElementById('position-x').textContent = data.x.toFixed(4);
-    document.getElementById('position-y').textContent = data.y.toFixed(4);
-    document.getElementById('position-z').textContent = data.z.toFixed(4);
+    // Update data displays with null checks
+    const updateElement = (id, value) => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = value;
+    };
     
-    // Update orientation displays with both radians and degrees
-    document.getElementById('orientation-roll').textContent = 
-        `${data.roll.toFixed(4)} rad (${(data.roll * 180 / Math.PI).toFixed(2)}°)`;
-    document.getElementById('orientation-pitch').textContent = 
-        `${data.pitch.toFixed(4)} rad (${(data.pitch * 180 / Math.PI).toFixed(2)}°)`;
-    document.getElementById('orientation-yaw').textContent = 
-        `${data.yaw.toFixed(4)} rad (${(data.yaw * 180 / Math.PI).toFixed(2)}°)`;
+    // Position updates
+    updateElement('position-x', data.x.toFixed(4));
+    updateElement('position-y', data.y.toFixed(4));
+    updateElement('position-z', data.z.toFixed(4));
     
-    // Update acceleration displays
-    document.getElementById('acceleration-x').textContent = `${data.acc_x.toFixed(4)} m/s²`;
-    document.getElementById('acceleration-y').textContent = `${data.acc_y.toFixed(4)} m/s²`;
-    document.getElementById('acceleration-z').textContent = `${data.acc_z.toFixed(4)} m/s²`;
+    // Orientation updates with both radians and degrees
+    updateElement('orientation-roll', 
+        `${data.roll.toFixed(4)} rad (${(data.roll * 180 / Math.PI).toFixed(2)}°)`);
+    updateElement('orientation-pitch', 
+        `${data.pitch.toFixed(4)} rad (${(data.pitch * 180 / Math.PI).toFixed(2)}°)`);
+    updateElement('orientation-yaw', 
+        `${data.yaw.toFixed(4)} rad (${(data.yaw * 180 / Math.PI).toFixed(2)}°)`);
     
-    // Update magnetometer displays
-    document.getElementById('magnetometer-x').textContent = `${data.mag_x.toFixed(4)} μT`;
-    document.getElementById('magnetometer-y').textContent = `${data.mag_y.toFixed(4)} μT`;
-    document.getElementById('magnetometer-z').textContent = `${data.mag_z.toFixed(4)} μT`;
-    document.getElementById('magnetometer-strength').textContent = `${data.mag_strength.toFixed(4)} μT`;
+    // Acceleration updates
+    updateElement('acceleration-x', `${data.acc_x.toFixed(4)} m/s²`);
+    updateElement('acceleration-y', `${data.acc_y.toFixed(4)} m/s²`);
+    updateElement('acceleration-z', `${data.acc_z.toFixed(4)} m/s²`);
+    
+    // Magnetometer updates
+    updateElement('magnetometer-x', `${data.mag_x.toFixed(4)} μT`);
+    updateElement('magnetometer-y', `${data.mag_y.toFixed(4)} μT`);
+    updateElement('magnetometer-z', `${data.mag_z.toFixed(4)} μT`);
+    updateElement('magnetometer-strength', `${data.mag_strength.toFixed(4)} μT`);
 }
 
 function updateRecordingStatus(recording) {
@@ -926,14 +1044,19 @@ function resetMeasurementData() {
     firstTimestamp = null;
 }
 
-function resetCharts() {
+function resetCharts(keepReferenceTrajectories = false) {
     // Reset all charts to empty state
     // Need to delete all traces from the position plot, not just index 0
     const positionPlot = document.getElementById('position-plot');
     if (positionPlot && positionPlot.data) {
-        // Delete all traces from position-plot by removing them one by one
-        while (positionPlot.data.length > 0) {
-            Plotly.deleteTraces('position-plot', positionPlot.data.length - 1);
+        if (keepReferenceTrajectories) {
+            // Only delete the measurement trace (index 0) when keeping reference trajectories
+            Plotly.deleteTraces('position-plot', 0);
+        } else {
+            // Delete all traces from position-plot by removing them one by one
+            while (positionPlot.data.length > 0) {
+                Plotly.deleteTraces('position-plot', positionPlot.data.length - 1);
+            }
         }
     }
     
@@ -1061,10 +1184,18 @@ function displayRecordingsList(recordings) {
     modal.style.display = 'block';
 }
 
-function loadRecording(recordingId) {
+function loadRecording(recordingId, keepReferenceTrajectories = false) {
     if (socket.readyState === WebSocket.OPEN) {
-        // Reset current view
-        resetCharts();
+        // Store reference trajectories if needed
+        const savedReferenceTrajectories = keepReferenceTrajectories ? {...referenceTrajectories} : {};
+        
+        // Reset current view, preserving reference trajectories if specified
+        resetCharts(keepReferenceTrajectories);
+        
+        // Restore reference trajectories if needed
+        if (keepReferenceTrajectories) {
+            referenceTrajectories = savedReferenceTrajectories;
+        }
         
         // Pause realtime updates
         isPaused = true;
@@ -1089,10 +1220,7 @@ function handleLoadedRecording(data) {
     // Store the recording data
     const estimations = data.estimations || [];
     referenceTrajectories = data.reference_trajectories || {};
-    
-    // Show toast notification
-    showToast(`Loaded recording: ${data.recording.name || 'Unnamed'} (${estimations.length} points)`);
-    
+        
     // Reset the first timestamp since we're loading a new recording
     firstTimestamp = null;
     
@@ -1424,29 +1552,36 @@ function plotRecordedTrajectory(estimations) {
     // Update last values in the displays
     if (estimations.length > 0) {
         const lastEstimation = estimations[estimations.length - 1];
+        
+        // Helper function to safely update text content
+        const updateElement = (id, value) => {
+            const element = document.getElementById(id);
+            if (element) element.textContent = value;
+        };
+        
         // Position
-        document.getElementById('position-x').textContent = lastEstimation.x.toFixed(4);
-        document.getElementById('position-y').textContent = lastEstimation.y.toFixed(4);
-        document.getElementById('position-z').textContent = lastEstimation.z.toFixed(4);
+        updateElement('position-x', lastEstimation.x.toFixed(4));
+        updateElement('position-y', lastEstimation.y.toFixed(4));
+        updateElement('position-z', lastEstimation.z.toFixed(4));
         // Orientation
-        document.getElementById('orientation-roll').textContent = 
-            `${lastEstimation.roll.toFixed(4)} rad (${(lastEstimation.roll * 180 / Math.PI).toFixed(2)}°)`;
-        document.getElementById('orientation-pitch').textContent = 
-            `${lastEstimation.pitch.toFixed(4)} rad (${(lastEstimation.pitch * 180 / Math.PI).toFixed(2)}°)`;
-        document.getElementById('orientation-yaw').textContent = 
-            `${lastEstimation.yaw.toFixed(4)} rad (${(lastEstimation.yaw * 180 / Math.PI).toFixed(2)}°)`;
+        updateElement('orientation-roll', 
+            `${lastEstimation.roll.toFixed(4)} rad (${(lastEstimation.roll * 180 / Math.PI).toFixed(2)}°)`);
+        updateElement('orientation-pitch', 
+            `${lastEstimation.pitch.toFixed(4)} rad (${(lastEstimation.pitch * 180 / Math.PI).toFixed(2)}°)`);
+        updateElement('orientation-yaw', 
+            `${lastEstimation.yaw.toFixed(4)} rad (${(lastEstimation.yaw * 180 / Math.PI).toFixed(2)}°)`);
         // Acceleration
-        document.getElementById('acceleration-x').textContent = `${lastEstimation.acc_x.toFixed(4)} m/s²`;
-        document.getElementById('acceleration-y').textContent = `${lastEstimation.acc_y.toFixed(4)} m/s²`;
-        document.getElementById('acceleration-z').textContent = `${lastEstimation.acc_z.toFixed(4)} m/s²`;
+        updateElement('acceleration-x', `${lastEstimation.acc_x.toFixed(4)} m/s²`);
+        updateElement('acceleration-y', `${lastEstimation.acc_y.toFixed(4)} m/s²`);
+        updateElement('acceleration-z', `${lastEstimation.acc_z.toFixed(4)} m/s²`);
         // Magnetometer
-        document.getElementById('magnetometer-x').textContent = `${lastEstimation.mag_x.toFixed(4)} μT`;
-        document.getElementById('magnetometer-y').textContent = `${lastEstimation.mag_y.toFixed(4)} μT`;
-        document.getElementById('magnetometer-z').textContent = `${lastEstimation.mag_z.toFixed(4)} μT`;
-        document.getElementById('magnetometer-strength').textContent = `${lastEstimation.mag_strength.toFixed(4)} μT`;
+        updateElement('magnetometer-x', `${lastEstimation.mag_x.toFixed(4)} μT`);
+        updateElement('magnetometer-y', `${lastEstimation.mag_y.toFixed(4)} μT`);
+        updateElement('magnetometer-z', `${lastEstimation.mag_z.toFixed(4)} μT`);
+        updateElement('magnetometer-strength', `${lastEstimation.mag_strength.toFixed(4)} μT`);
         // Mouse integrated
-        document.getElementById('mouse-integrated-x').textContent = lastEstimation.mouse_integrated_x.toFixed(4);
-        document.getElementById('mouse-integrated-y').textContent = lastEstimation.mouse_integrated_y.toFixed(4);
+        updateElement('mouse-integrated-x', lastEstimation.mouse_integrated_x.toFixed(4));
+        updateElement('mouse-integrated-y', lastEstimation.mouse_integrated_y.toFixed(4));
     }
 }
 
@@ -1465,7 +1600,7 @@ function addReferenceTrajectory(name, points) {
         z: zPositions,
         line: {
             width: 4,
-            color: '#fc6d26', // Different color for reference
+            color: '#ff0000', // Red color for reference trajectory
             opacity: 0.9
         },
         name: `Reference: ${name}`
@@ -1479,12 +1614,12 @@ function deleteRecording(recordingId) {
         })
         .then(response => response.json())
         .then(data => {
-            if (data.success) {
+                if (data.success) {
                 alert('Recording deleted successfully');
                 // Refresh the recordings list
                 showRecordingsList();
-            } else {
-                alert(`Error deleting recording: ${data.error || 'Unknown error'}`);
+                } else {
+                        alert(`Error deleting recording: ${data.error || 'Unknown error'}`);
             }
         })
         .catch(error => {
@@ -1494,8 +1629,221 @@ function deleteRecording(recordingId) {
     }
 }
 
+// Reference Trajectory Management Functions
+function loadReferenceFromCSV() {
+    // For embedded device, display a list of available reference trajectory files
+    // instead of using file input dialog which may not work on all devices
+    fetch('/api/list_reference_files')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.files) {
+            if (data.files.length === 0) {
+                showToast('No reference trajectory files found');
+                return;
+            }
+            
+            // Display a dialog to select which file to load
+            showReferenceFileList(data.files);
+        } else {
+            showToast(`Error loading reference files: ${data.error || 'Unknown error'}`);
+        }
+    })
+    .catch(error => {
+        console.error('Error listing reference files:', error);
+        showToast('Error loading reference files from server');
+    });
+}
+
+function showReferenceFileList(files) {
+    // Get reference to dialog element or create one
+    let dialog = document.getElementById('reference-file-dialog');
+    
+    if (!dialog) {
+        dialog = document.createElement('div');
+        dialog.id = 'reference-file-dialog';
+        dialog.className = 'dialog';
+        
+        dialog.innerHTML = `
+            <div class="dialog-content">
+                <div class="dialog-header">
+                    <h3><i class="bi bi-file-earmark-text"></i> Reference CSV Files</h3>
+                    <button id="close-reference-file-dialog" class="close-button">&times;</button>
+                </div>
+                <div class="dialog-body">
+                    <table class="reference-table" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Modified</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reference-file-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(dialog);
+        
+        // Add close button event handler
+        document.getElementById('close-reference-file-dialog').addEventListener('click', function() {
+            dialog.style.display = 'none';
+        });
+    }
+    
+    // Get tbody element and clear it
+    const tbody = document.getElementById('reference-file-tbody');
+    tbody.innerHTML = '';
+    
+    // Add rows for each file
+    files.forEach(file => {
+        const row = document.createElement('tr');
+        
+        // Name cell
+        const nameCell = document.createElement('td');
+        nameCell.textContent = file.name;
+        
+        // Modified date cell
+        const modifiedCell = document.createElement('td');
+        modifiedCell.textContent = file.modified;
+        
+        // Actions cell
+        const actionsCell = document.createElement('td');
+        const loadBtn = document.createElement('button');
+        loadBtn.textContent = 'Load';
+        loadBtn.onclick = function() {
+            loadReferenceFile(file.name);
+            dialog.style.display = 'none';
+        };
+        actionsCell.appendChild(loadBtn);
+        
+        // Add cells to row
+        row.appendChild(nameCell);
+        row.appendChild(modifiedCell);
+        row.appendChild(actionsCell);
+        
+        // Add row to table
+        tbody.appendChild(row);
+    });
+    
+    // Display the dialog
+    dialog.style.display = 'block';
+}
+
+function loadReferenceFile(filename) {
+    fetch(`/api/load_reference_file/${filename}`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.points) {
+            // Add the reference trajectory directly to the UI
+            const name = data.name;
+            addReferenceTrajectoryToUI(name, data.points);
+            showToast(`Loaded reference trajectory: ${name} (${data.points.length} points)`);
+            
+            // If we have a recording ID, save the reference to the database
+            if (currentRecordingId) {
+                saveReferenceTrajectoryToDB(name, data.points);
+            }
+        } else {
+            showToast(`Error loading reference file: ${data.error || 'Unknown error'}`);
+        }
+    })
+    .catch(error => {
+        console.error('Error loading reference file:', error);
+        showToast('Error loading reference file from server');
+    });
+}
+
+function saveReferenceTrajectoryToDB(name, points) {
+    // Save the reference trajectory to the database
+    fetch(`/api/save_reference_trajectory/${currentRecordingId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            name: name,
+            points: points
+        })
+    })
+    .then(response => response.json())
+    .catch(error => {
+        console.error('Error saving reference trajectory:', error);
+    });
+}
+
+function showReferenceTrajectoryList(trajectories) {
+    // Get reference to dialog element
+    const dialog = document.getElementById('reference-dialog');
+    const tbody = document.getElementById('reference-tbody');
+    
+    // Clear existing rows
+    tbody.innerHTML = '';
+    
+    // List all reference trajectories
+    for (const [name, points] of Object.entries(trajectories)) {
+        const row = document.createElement('tr');
+        
+        // Name cell
+        const nameCell = document.createElement('td');
+        nameCell.textContent = name;
+        
+        // Points cell
+        const pointsCell = document.createElement('td');
+        pointsCell.textContent = `${points.length} points`;
+        
+        // Actions cell
+        const actionsCell = document.createElement('td');
+        const loadBtn = document.createElement('button');
+        loadBtn.textContent = 'Load';
+        loadBtn.onclick = function() {
+            loadReferenceTrajectory(name, points);
+        };
+        actionsCell.appendChild(loadBtn);
+        
+        // Add cells to row
+        row.appendChild(nameCell);
+        row.appendChild(pointsCell);
+        row.appendChild(actionsCell);
+        
+        // Add row to table
+        tbody.appendChild(row);
+    }
+    
+    // Add close button event handler if not already set
+    const closeBtn = document.getElementById('close-reference-dialog');
+    if (!closeBtn.onclick) {
+        closeBtn.onclick = function() {
+            dialog.style.display = 'none';
+        };
+    }
+    
+    // Display the dialog
+    dialog.style.display = 'block';
+}
+
+function loadReferenceTrajectory(name, points) {
+    // Add the selected reference trajectory to the UI
+    addReferenceTrajectoryToUI(name, points);
+    
+    // Close the dialog
+    document.getElementById('reference-dialog').style.display = 'none';
+}
+
+function addReferenceTrajectoryToUI(name, points) {
+    // Store the reference trajectory in our local object
+    referenceTrajectories[name] = points;
+    
+    // Add the reference trajectory to the 3D plot
+    addReferenceTrajectory(name, points);
+    
+    showToast(`Reference trajectory "${name}" loaded with ${points.length} points.`);
+}
+
+// Toast notification function
 function showToast(message) {
-    // Create toast container if it doesn't exist
+    // Check if toast element exists, create if not
     let toast = document.getElementById('toast');
     if (!toast) {
         toast = document.createElement('div');
@@ -1508,9 +1856,26 @@ function showToast(message) {
     toast.className = 'show';
     
     // Hide toast after 3 seconds
-    setTimeout(() => {
-        toast.className = '';
+    setTimeout(function() { 
+        toast.className = toast.className.replace('show', ''); 
     }, 3000);
+}
+
+function resetMeasurementsOnly() {
+    // Store existing reference trajectories
+    const savedReferenceTrajectories = {...referenceTrajectories};
+    
+    // Reset measurement data
+    resetMeasurementData();
+    
+    // Reset first timestamp
+    firstTimestamp = null;
+    
+    // Clear all plots while keeping reference trajectories
+    resetCharts(true);
+    
+    // Restore the reference trajectories object
+    referenceTrajectories = savedReferenceTrajectories;    
 }
 
 // Theme management functions
