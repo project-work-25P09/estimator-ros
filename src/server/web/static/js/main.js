@@ -227,7 +227,7 @@ function initCharts() {
             zerolinecolor: '#8b949e' 
         },
         yaxis: { 
-            title: 'Value (radians)',
+            title: 'Angle (degrees)',
             gridcolor: '#30363d',
             zerolinecolor: '#8b949e' 
         },
@@ -332,7 +332,7 @@ function initCharts() {
             zerolinecolor: '#8b949e' 
         },
         yaxis2: {
-            title: 'Field Strength',
+            title: 'Field Strength (μT)',
             overlaying: 'y',
             side: 'right',
             showgrid: false
@@ -372,7 +372,7 @@ function initCharts() {
             zerolinecolor: '#8b949e' 
         },
         yaxis: { 
-            title: 'Integrated Value',
+            title: 'Relative position (m)',
             gridcolor: '#30363d',
             zerolinecolor: '#8b949e'
         },
@@ -419,10 +419,14 @@ function updateCharts(data) {
     
     Plotly.extendTraces('position-2d-plot', position2DUpdate, [0, 1, 2], 100);
     
-    // Orientation data update
+    // Orientation data update - convert radians to degrees
     const orientationUpdate = {
         x: [[relativeTime], [relativeTime], [relativeTime]],
-        y: [[data.roll], [data.pitch], [data.yaw]]
+        y: [
+            [data.roll * 180 / Math.PI], // Convert roll to degrees
+            [data.pitch * 180 / Math.PI], // Convert pitch to degrees
+            [data.yaw * 180 / Math.PI] // Convert yaw to degrees
+        ]
     };
     
     Plotly.extendTraces('orientation-plot', orientationUpdate, [0, 1, 2], 100);
@@ -1300,14 +1304,14 @@ function plotRecordedTrajectory(estimations) {
         }
     ]);
     
-    // Plot orientation data
+    // Plot orientation data - converting to degrees
     Plotly.deleteTraces('orientation-plot', [0, 1, 2]);
     Plotly.addTraces('orientation-plot', [
         {
             type: 'scatter',
             mode: 'lines',
             x: timestamps,
-            y: rolls,
+            y: rolls.map(r => r * 180 / Math.PI), // Convert rolls to degrees
             name: 'Roll',
             line: { color: '#f85149', width: 2 }
         },
@@ -1315,7 +1319,7 @@ function plotRecordedTrajectory(estimations) {
             type: 'scatter',
             mode: 'lines',
             x: timestamps,
-            y: pitches,
+            y: pitches.map(p => p * 180 / Math.PI), // Convert pitches to degrees
             name: 'Pitch',
             line: { color: '#238636', width: 2 }
         },
@@ -1323,7 +1327,7 @@ function plotRecordedTrajectory(estimations) {
             type: 'scatter',
             mode: 'lines',
             x: timestamps,
-            y: yaws,
+            y: yaws.map(y => y * 180 / Math.PI), // Convert yaws to degrees
             name: 'Yaw',
             line: { color: '#58a6ff', width: 2 }
         }
