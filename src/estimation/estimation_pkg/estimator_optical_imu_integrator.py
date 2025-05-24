@@ -14,8 +14,9 @@ class OpticalImuIntegratorEstimator(Estimator):
         self.v = np.zeros(3)
         self.q = np.array([1.0, 0.0, 0.0, 0.0])
         self.prev_time = None
-        self.last_mouse_integrated_x = 0.0
-        self.last_mouse_integrated_y = 0.0
+        if not hasattr(self, 'last_mouse_integrated_x'):
+            self.last_mouse_integrated_x = 0.0
+            self.last_mouse_integrated_y = 0.0
 
     def update_measurements(self, meas: Measurements):
         current_time = rclpy.time.Time.from_msg(meas.stamp)
