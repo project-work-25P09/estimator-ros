@@ -145,29 +145,34 @@
     color: var(--text-color);
 }
 
-.recordings-table {
+.recordings-table, .reference-table {
     width: 100%;
     border-collapse: collapse;
 }
 
 .recordings-table th,
-.recordings-table td {
+.recordings-table td,
+.reference-table th,
+.reference-table td {
     text-align: left;
     padding: 12px 15px;
     border-bottom: 1px solid var(--card-border);
 }
 
-.recordings-table thead th {
+.recordings-table thead th,
+.reference-table th {
     background-color: rgba(255, 255, 255, 0.05);
     position: sticky;
     top: 0;
 }
 
-.recordings-table tr:hover {
+.recordings-table tr:hover,
+.reference-table tr:hover {
     background-color: rgba(255, 255, 255, 0.03);
 }
 
-.recordings-table button {
+.recordings-table button,
+.reference-table button {
     margin-right: 5px;
     padding: 5px 10px;
     border-radius: var(--border-radius);
@@ -186,6 +191,28 @@
 .recordings-table button:nth-child(2):hover {
     background-color: var(--error-color);
     border-color: var(--error-color);
+}
+
+.reference-table th {
+    background-color: rgba(0, 0, 0, 0.1);
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.reference-table button {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.reference-table button:hover {
+    background-color: var(--accent-hover);
 }
 
 .no-recordings {

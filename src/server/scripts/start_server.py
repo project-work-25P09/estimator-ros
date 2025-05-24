@@ -15,6 +15,7 @@ from estimation.msg import Estimation
 import threading
 from ament_index_python.packages import get_package_share_directory
 import os.path
+import glob
 from datetime import datetime
 
 from server_pkg.server_utils import ConnectionManager
@@ -223,6 +224,108 @@ async def get_reference_trajectories_handler(recording_id: int):
     """Get all reference trajectories for a specific recording"""
     return get_reference_trajectories(recording_id)
 
+# API endpoint for listing CSV reference trajectory files
+@app.get("/api/list_reference_files")
+async def list_reference_files_handler():
+    """List all reference trajectory CSV files in the data directory"""
+    try:
+        # Path to reference trajectory files
+        reference_dir = os.path.join(os.path.expanduser("~/estimator-ros/data/reference_trajectories"))
+        
+        # Check if directory exists
+        if not os.path.exists(reference_dir):
+            return {"success": False, "error": "Reference trajectories directory not found"}
+        
+        # Get all CSV files
+        csv_files = glob.glob(os.path.join(reference_dir, "*.csv"))
+        
+        # Format the results
+        files = []
+        for file_path in csv_files:
+            filename = os.path.basename(file_path)
+            # Check file size
+            size = os.path.getsize(file_path)
+            # Get modified time
+            modified = datetime.fromtimestamp(os.path.getmtime(file_path)).strftime('%Y-%m-%d %H:%M:%S')
+            
+            files.append({
+                "name": filename,
+                "path": file_path,
+                "size": size,
+                "modified": modified
+            })
+            
+        return {"success": True, "files": files}
+    except Exception as e:
+        print(f"Error listing reference files: {str(e)}")
+        return {"success": False, "error": str(e)}
+
+# API endpoint to load reference trajectory from file
+@app.get("/api/load_reference_file/{filename}")
+async def load_reference_file_handler(filename: str):
+    """Load a reference trajectory from a CSV file"""
+    try:
+        # Path to the reference trajectory file
+        file_path = os.path.join(os.path.expanduser("~/estimator-ros/data/reference_trajectories"), filename)
+        
+        # Check if file exists
+        if not os.path.exists(file_path):
+            return {"success": False, "error": f"File {filename} not found"}
+        
+        # Read and parse the CSV file
+        points = []
+        with open(file_path, 'r') as f:
+            lines = f.readlines()
+            
+            # Check if it has a header
+            has_header = False
+            if len(lines) > 0:
+                first_line = lines[0].strip()
+                if first_line.startswith('//'):
+                    lines = lines[1:]  # Skip comment line
+                    if len(lines) > 0:
+                        first_line = lines[0].strip()
+                
+                if 'x' in first_line.lower() and 'y' in first_line.lower() and 'z' in first_line.lower():
+                    has_header = True
+            
+            # Skip header if it exists
+            start_idx = 1 if has_header else 0
+            
+            # Parse each line
+            for i, line in enumerate(lines[start_idx:]):
+                line = line.strip()
+                if not line or line.startswith('//'):
+                    continue
+                
+                # Detect separator (comma or semicolon)
+                separator = ';' if ';' in line else ','
+                values = line.split(separator)
+                
+                if len(values) >= 3:
+                    try:
+                        point = {
+                            "x": float(values[0]),
+                            "y": float(values[1]),
+                            "z": float(values[2]),
+                            "timestamp": i  # Use index as timestamp
+                        }
+                        points.append(point)
+                    except ValueError:
+                        # Skip lines that can't be parsed
+                        continue
+        
+        # Return the parsed points
+        return {
+            "success": True, 
+            "name": os.path.splitext(filename)[0],
+            "points": points
+        }
+    except Exception as e:
+        print(f"Error loading reference file {filename}: {str(e)}")
+        traceback.print_exc()
+        return {"success": False, "error": str(e)}
+
 # API endpoint for saving a reference trajectory
 @app.post("/api/save_reference_trajectory/{recording_id}")
 async def save_reference_trajectory_handler(recording_id: int, data: dict):
@@ -406,6 +509,24 @@ def get_latest_data():
             })
         
         return data
+
+# API endpoint to list reference trajectories from data folder
+@app.get("/api/list_reference_trajectories")
+async def list_reference_trajectories_handler():
+    """List all reference trajectories available in the data folder"""
+    try:
+        # Get the data folder path from the server configuration
+        data_folder = os.path.join(get_package_share_directory('server'), 'data', 'trajectories')
+        
+        # List all trajectory files in the data folder
+        trajectory_files = glob.glob(os.path.join(data_folder, "*.json"))
+        
+        # Extract file names without path
+        trajectory_names = [os.path.basename(f) for f in trajectory_files]
+        
+        return {"success": True, "trajectories": trajectory_names}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 def main():
     # Initialize ROS
