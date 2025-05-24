@@ -19,6 +19,7 @@ let currentTrajectory = "trajectory1";
 let currentRecordingId = null;
 let recordingBuffer = [];
 let referenceTrajectories = {};
+let firstTimestamp = null; // Track the first timestamp for relative time calculations
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
@@ -102,7 +103,7 @@ function initCharts() {
         y: [],
         z: [],
         marker: {
-            size: 4,
+            size: 2,
             color: '#58a6ff',
             opacity: 0.8
         },
@@ -117,17 +118,26 @@ function initCharts() {
             xaxis: { 
                 title: 'X Position',
                 gridcolor: '#30363d',
-                zerolinecolor: '#58a6ff'
+                zerolinecolor: '#58a6ff',
+                nticks: 10,
+                showgrid: true,
+                showline: true
             },
             yaxis: { 
                 title: 'Y Position',
                 gridcolor: '#30363d',
-                zerolinecolor: '#58a6ff'
+                zerolinecolor: '#58a6ff',
+                nticks: 10,
+                showgrid: true,
+                showline: true
             },
             zaxis: { 
                 title: 'Z Position',
                 gridcolor: '#30363d',
-                zerolinecolor: '#58a6ff'
+                zerolinecolor: '#58a6ff',
+                nticks: 10,
+                showgrid: true,
+                showline: true
             },
             aspectmode: 'cube',
             camera: { eye: { x: 1.9, y: 0.7, z: 0.1 } }
@@ -381,6 +391,14 @@ function initCharts() {
 }
 
 function updateCharts(data) {
+    // Set the first timestamp if not already set
+    if (firstTimestamp === null) {
+        firstTimestamp = data.timestamp;
+    }
+    
+    // Calculate relative time (seconds since first data point)
+    const relativeTime = data.timestamp - firstTimestamp;
+    
     // Position data update for 3D visualization
     const positionUpdate = {
         x: [[data.x]],
@@ -395,7 +413,7 @@ function updateCharts(data) {
     
     // Position 2D data update
     const position2DUpdate = {
-        x: [[data.timestamp], [data.timestamp], [data.timestamp]],
+        x: [[relativeTime], [relativeTime], [relativeTime]],
         y: [[data.x], [data.y], [data.z]]
     };
     
@@ -403,7 +421,7 @@ function updateCharts(data) {
     
     // Orientation data update
     const orientationUpdate = {
-        x: [[data.timestamp], [data.timestamp], [data.timestamp]],
+        x: [[relativeTime], [relativeTime], [relativeTime]],
         y: [[data.roll], [data.pitch], [data.yaw]]
     };
     
@@ -411,7 +429,7 @@ function updateCharts(data) {
     
     // Acceleration data update
     const accelerationUpdate = {
-        x: [[data.timestamp], [data.timestamp], [data.timestamp]],
+        x: [[relativeTime], [relativeTime], [relativeTime]],
         y: [[data.acc_x], [data.acc_y], [data.acc_z]]
     };
     
@@ -419,7 +437,7 @@ function updateCharts(data) {
     
     // Magnetometer data update
     const magnetometerUpdate = {
-        x: [[data.timestamp], [data.timestamp], [data.timestamp], [data.timestamp]],
+        x: [[relativeTime], [relativeTime], [relativeTime], [relativeTime]],
         y: [[data.mag_x], [data.mag_y], [data.mag_z], [data.mag_strength]]
     };
     
@@ -427,7 +445,7 @@ function updateCharts(data) {
     
     // Mouse data update
     const mouseUpdate = {
-        x: [[data.timestamp], [data.timestamp]],
+        x: [[relativeTime], [relativeTime]],
         y: [[data.mouse_integrated_x], [data.mouse_integrated_y]]
     };
     Plotly.extendTraces('mouse-plot', mouseUpdate, [0, 1], 100);
@@ -573,17 +591,29 @@ function setupEventListeners() {
                 'Content-Type': 'application/json'
             }
         })
+        
+        // Reset the first timestamp to null so a new one will be captured
+        firstTimestamp = null;
 
         setTimeout(() => {
             // Clear all the charts
-            Plotly.deleteTraces('position-plot', 0);
+            // Need to delete all traces from the position plot, not just index 0
+            const positionPlot = document.getElementById('position-plot');
+            if (positionPlot && positionPlot.data) {
+                // Delete all traces from position-plot by removing them one by one from the end
+                while (positionPlot.data.length > 0) {
+                    Plotly.deleteTraces('position-plot', positionPlot.data.length - 1);
+                }
+            }
+            
+            // Add a fresh trace for the new trajectory
             Plotly.addTraces('position-plot', {
                 type: 'scatter3d',
                 mode: 'lines+markers',
                 x: [],
                 y: [],
                 z: [],
-                marker: { size: 4, color: '#58a6ff', opacity: 0.8 },
+                marker: { size: 2, color: '#58a6ff', opacity: 0.8 },
                 line: { width: 3, color: '#58a6ff', opacity: 0.7 },
                 name: 'Current Trajectory'
             });
@@ -887,11 +917,22 @@ function resetMeasurementData() {
     });
     
     recordingBuffer = [];
+    
+    // Reset the first timestamp to null so a new one will be captured
+    firstTimestamp = null;
 }
 
 function resetCharts() {
     // Reset all charts to empty state
-    Plotly.deleteTraces('position-plot', 0);
+    // Need to delete all traces from the position plot, not just index 0
+    const positionPlot = document.getElementById('position-plot');
+    if (positionPlot && positionPlot.data) {
+        // Delete all traces from position-plot by removing them one by one
+        while (positionPlot.data.length > 0) {
+            Plotly.deleteTraces('position-plot', positionPlot.data.length - 1);
+        }
+    }
+    
     Plotly.addTraces('position-plot', {
         type: 'scatter3d',
         mode: 'lines+markers',
@@ -899,7 +940,7 @@ function resetCharts() {
         y: [],
         z: [],
         marker: {
-            size: 4,
+            size: 2,
             color: '#58a6ff',
             opacity: 0.8
         },
@@ -910,6 +951,9 @@ function resetCharts() {
         },
         name: 'Current Trajectory'
     });
+    
+    // Reset 3D plot axis ranges with grid lines
+    resetPosition3DPlotScaling();
     
     // Reset other charts
     ['orientation-plot', 'acceleration-plot', 'magnetometer-plot', 'mouse-plot', 'position-2d-plot'].forEach(plot => {
@@ -1045,6 +1089,9 @@ function handleLoadedRecording(data) {
     // Show toast notification
     showToast(`Loaded recording: ${data.recording.name || 'Unnamed'} (${estimations.length} points)`);
     
+    // Reset the first timestamp since we're loading a new recording
+    firstTimestamp = null;
+    
     // Plot all estimation data points
     if (estimations.length > 0) {
         plotRecordedTrajectory(estimations);
@@ -1097,15 +1144,30 @@ function updatePosition3DPlotWithEqualAxes() {
             aspectmode: 'cube',
             xaxis: { 
                 range: [-maxDistance, maxDistance],
-                autorange: false
+                autorange: false,
+                nticks: 10,
+                showgrid: true,
+                showline: true,
+                gridcolor: '#30363d',
+                zerolinecolor: '#58a6ff'
             },
             yaxis: { 
                 range: [-maxDistance, maxDistance],
-                autorange: false
+                autorange: false,
+                nticks: 10,
+                showgrid: true,
+                showline: true,
+                gridcolor: '#30363d',
+                zerolinecolor: '#58a6ff'
             },
             zaxis: { 
                 range: [-maxDistance, maxDistance],
-                autorange: false
+                autorange: false,
+                nticks: 10,
+                showgrid: true,
+                showline: true,
+                gridcolor: '#30363d',
+                zerolinecolor: '#58a6ff'
             }
         }
     };
@@ -1120,9 +1182,30 @@ function resetPosition3DPlotScaling() {
     const resetLayout = {
         scene: {
             aspectmode: 'cube',
-            xaxis: { autorange: true },
-            yaxis: { autorange: true },
-            zaxis: { autorange: true }
+            xaxis: { 
+                autorange: true,
+                nticks: 10,
+                showgrid: true,
+                showline: true,
+                gridcolor: '#30363d',
+                zerolinecolor: '#58a6ff'
+            },
+            yaxis: { 
+                autorange: true,
+                nticks: 10,
+                showgrid: true,
+                showline: true,
+                gridcolor: '#30363d',
+                zerolinecolor: '#58a6ff'
+            },
+            zaxis: { 
+                autorange: true,
+                nticks: 10,
+                showgrid: true,
+                showline: true,
+                gridcolor: '#30363d',
+                zerolinecolor: '#58a6ff'
+            }
         }
     };
     
@@ -1132,7 +1215,9 @@ function resetPosition3DPlotScaling() {
 // Update plotRecordedTrajectory function to maintain equal scaling
 function plotRecordedTrajectory(estimations) {
     // Extract data for each chart
-    const timestamps = estimations.map(e => e.timestamp);
+    // Convert absolute timestamps to relative (seconds from first timestamp)
+    const startTime = estimations.length > 0 ? estimations[0].timestamp : 0;
+    const timestamps = estimations.map(e => e.timestamp - startTime);
     const xPositions = estimations.map(e => e.x);
     const yPositions = estimations.map(e => e.y);
     const zPositions = estimations.map(e => e.z);
@@ -1155,7 +1240,15 @@ function plotRecordedTrajectory(estimations) {
     const mouseIntegratedYs = estimations.map(e => e.mouse_integrated_y);
     
     // Plot 3D position
-    Plotly.deleteTraces('position-plot', 0);
+    // Delete all existing traces from the position plot
+    const positionPlot = document.getElementById('position-plot');
+    if (positionPlot && positionPlot.data) {
+        // Delete all traces from position-plot by removing them one by one
+        while (positionPlot.data.length > 0) {
+            Plotly.deleteTraces('position-plot', positionPlot.data.length - 1);
+        }
+    }
+    
     Plotly.addTraces('position-plot', {
         type: 'scatter3d',
         mode: 'lines+markers',
@@ -1163,7 +1256,7 @@ function plotRecordedTrajectory(estimations) {
         y: yPositions,
         z: zPositions,
         marker: {
-            size: 4,
+            size: 2,
             color: '#58a6ff',
             opacity: 0.8
         },
