@@ -57,13 +57,12 @@ class EstimatorNode(Node):
         )
         orientation = np.array(
             [
+                imu_msg.orientation.w,
                 imu_msg.orientation.x,
                 imu_msg.orientation.y,
                 imu_msg.orientation.z,
-                imu_msg.orientation.w,
             ]
         )
-
         self.update_imu(acceleration, angular_velocity, orientation)
 
         self.imu_updated = True
@@ -89,7 +88,7 @@ class EstimatorNode(Node):
     def update_imu(self, acceleration, angular_velocity, orientation):
         self.measurements.acceleration =  Vector3(**dict(zip(("x","y","z"), acceleration.tolist())))
         self.measurements.angular_velocity = Vector3(**dict(zip(("x","y","z"), angular_velocity.tolist())))
-        self.measurements.est_orientation = Quaternion(**dict(zip(("x","y","z","w"), orientation.tolist())))
+        self.measurements.est_orientation = Quaternion(**dict(zip(("w","x","y","z"), orientation.tolist())))
 
     def update_magnetic_field(self, magnetic_field):
         self.measurements.magnetic_field = Vector3(**dict(zip(("x","y","z"), magnetic_field.tolist())))

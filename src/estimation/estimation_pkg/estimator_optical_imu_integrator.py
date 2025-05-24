@@ -3,6 +3,7 @@ import estimation_pkg.utils as utils
 import numpy as np
 from estimation.msg import Estimation, Measurements
 import rclpy
+import quaternion
 
 
 class OpticalImuIntegratorEstimator(Estimator):
@@ -12,7 +13,8 @@ class OpticalImuIntegratorEstimator(Estimator):
     def reset(self):
         self.p = np.zeros(3)
         self.v = np.zeros(3)
-        self.q = np.array([1.0, 0.0, 0.0, 0.0])
+        self.q = quaternion.from_float_array([1.0, 0.0, 0.0, 0.0])
+        # self.q = np.array([1.0, 0.0, 0.0, 0.0])
         self.prev_time = None
         if not hasattr(self, 'last_mouse_integrated_x'):
             self.last_mouse_integrated_x = 0.0
@@ -33,17 +35,14 @@ class OpticalImuIntegratorEstimator(Estimator):
         self.last_mouse_integrated_x = meas.mouse_integrated_x
         self.last_mouse_integrated_y = meas.mouse_integrated_y
 
-        # Convert quaternion to rotation matrix
-        q = np.array([meas.est_orientation.x, meas.est_orientation.y, meas.est_orientation.z, meas.est_orientation.w])
-        rotation_matrix = utils.quaternion_to_rotation_matrix(q)
+        self.q = quaternion.from_float_array([meas.est_orientation.w, meas.est_orientation.x, meas.est_orientation.y, meas.est_orientation.z])
 
         # Optical flow vector in local frame
-        optical_flow_local = np.array([-dx, dy, 0.0])
-
+        optical_flow_local = np.array([dy, dx, 0.0])
+        # optical_flow_local = np.array([-dx, dy, 0.0])
         # Transform optical flow to global frame
-        optical_flow_global = rotation_matrix @ optical_flow_local
+        optical_flow_global = quaternion.rotate_vectors(self.q, optical_flow_local)
 
-        # Update position in global frame
         self.p += optical_flow_global
 
     def get_estimation_msg(self) -> Estimation:
@@ -51,7 +50,8 @@ class OpticalImuIntegratorEstimator(Estimator):
         msg.x = float(self.p[0])
         msg.y = float(self.p[1])
         msg.z = float(self.p[2])
-        yaw, pitch, roll = utils.quaternion_to_euler(self.q)
+        yaw, pitch, roll = quaternion.as_euler_angles(self.q)
+        # yaw, pitch, roll = utils.quaternion_to_euler(self.q)
         msg.yaw = float(yaw)
         msg.pitch = float(pitch)
         msg.roll = float(roll)

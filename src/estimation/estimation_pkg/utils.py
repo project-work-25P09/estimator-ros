@@ -1,5 +1,4 @@
 import numpy as np
-import math
 from estimation_pkg.estimator_simple_ekf import SimpleEKF
 from estimation_pkg.estimator_imu_dead_reckoning import (
     DeadReckoningEstimator,
