@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import Point, Vector3, Quaternion
+from geometry_msgs.msg import Point
 from sensor_msgs.msg import Imu, MagneticField
 from estimation.msg import Estimation, Measurements
 import numpy as np
@@ -41,7 +41,7 @@ class EstimatorNode(Node):
         self.get_logger().info("EstimatorNode started.")
 
     def imu_mag_callback(self, imu_msg: Imu, mag_msg: MagneticField):
-        self.measurements.acceleration = imu_msg.linear_acceleration
+        self.measurements.linear_acceleration = imu_msg.linear_acceleration
         self.measurements.angular_velocity = imu_msg.angular_velocity
         self.measurements.est_orientation = imu_msg.orientation
         self.measurements.magnetic_field = mag_msg.magnetic_field
