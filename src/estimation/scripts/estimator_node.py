@@ -30,8 +30,8 @@ class EstimatorNode(Node):
 
         self.imu_subscriber = message_filters.Subscriber(self, Imu, "/imu/data")
         self.mag_subscriber = message_filters.Subscriber(self, MagneticField, "/imu/mag")
-        self.ts = message_filters.ApproximateTimeSynchronizer(
-            [self.imu_subscriber, self.mag_subscriber], queue_size=200, slop=0.1
+        self.ts = message_filters.TimeSynchronizer(
+            [self.imu_subscriber, self.mag_subscriber], queue_size=200
         )
         self.ts.registerCallback(self.imu_mag_callback)
         
@@ -64,9 +64,6 @@ class EstimatorNode(Node):
 
         self.measurements.mouse_integrated_x += float(flow_x)
         self.measurements.mouse_integrated_y += float(flow_y)
-
-        self.opt_updated = True
-        self.cb_measurement()
 
     def publish_estimation(self):
         est = self.estimator.get_estimation_msg()

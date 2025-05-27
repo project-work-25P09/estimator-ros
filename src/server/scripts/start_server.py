@@ -76,12 +76,12 @@ class EstimationListener(Node):
                 "yaw": msg.yaw,
                 "pitch": msg.pitch,
                 "roll": msg.roll,
-                "acc_x": msg.measurements.acceleration.x,
-                "acc_y": msg.measurements.acceleration.y,
-                "acc_z": msg.measurements.acceleration.z,
-                "acc_yaw": msg.measurements.acceleration.x, # todo
-                "acc_pitch": msg.measurements.acceleration.y, # todo
-                "acc_roll": msg.measurements.acceleration.z, # todo
+                "acc_x": msg.measurements.linear_acceleration.x,
+                "acc_y": msg.measurements.linear_acceleration.y,
+                "acc_z": msg.measurements.linear_acceleration.z,
+                "acc_yaw": msg.measurements.linear_acceleration.x, # todo
+                "acc_pitch": msg.measurements.linear_acceleration.y, # todo
+                "acc_roll": msg.measurements.linear_acceleration.z, # todo
                 "mag_x": msg.measurements.magnetic_field.x,
                 "mag_y": msg.measurements.magnetic_field.y,
                 "mag_z": msg.measurements.magnetic_field.z,
@@ -94,8 +94,8 @@ class EstimationListener(Node):
             data_ros.append([
                 timestamp_sec,
                 msg.x, msg.y, msg.z, msg.yaw, msg.pitch, msg.roll,
-                msg.measurements.acceleration.x, msg.measurements.acceleration.y, msg.measurements.acceleration.z,
-                msg.measurements.acceleration.x, msg.measurements.acceleration.y, msg.measurements.acceleration.z, # todo
+                msg.measurements.linear_acceleration.x, msg.measurements.linear_acceleration.y, msg.measurements.linear_acceleration.z,
+                msg.measurements.linear_acceleration.x, msg.measurements.linear_acceleration.y, msg.measurements.linear_acceleration.z, # todo
                 msg.measurements.magnetic_field.x, msg.measurements.magnetic_field.y, msg.measurements.magnetic_field.z,
                 msg.measurements.magnetic_field_strength,
                 msg.measurements.mouse_integrated_x, msg.measurements.mouse_integrated_y

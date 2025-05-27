@@ -35,7 +35,7 @@ class OpticalImuIntegratorEstimator(Estimator):
 
         self.q = quaternion.from_float_array([meas.est_orientation.w, meas.est_orientation.x, meas.est_orientation.y, meas.est_orientation.z])
 
-        optical_flow_local = np.array([dy, dx, 0.0])
+        optical_flow_local = np.array([dx, dy, 0.0])
         optical_flow_global = quaternion.rotate_vectors(self.q, optical_flow_local)
 
         self.p += optical_flow_global
