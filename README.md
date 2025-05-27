@@ -18,13 +18,13 @@ rosdep install --from-paths src/ -i -r -y
 colcon build --symlink-install
 ```
 
-## Calibration
+<!-- ## Calibration
 
 Modify the configuration files `config/calibration.yml` and `config/estimation.yml` with estimated values.
 
 ```bash
 # TODO
-```
+``` -->
 
 ## Usage
 
@@ -34,8 +34,18 @@ To start everything, use the monolithic start script:
 ros2 launch main main_launch.py
 ```
 
-## Injecting dummy data to BD 
+## Web interface
+
+You can connect to the web interface inside the same network.
+
+1. Open browser
+
+2. type `http://<DEVICE IP>:8000`
+
+3. Enjoy! 🚀
+
+<!-- ## Injecting dummy data to BD
 
 ```bash
 PYTHONPATH=src/server python3 src/server/scripts/inject_dummy_recordings.py
-```
+``` -->

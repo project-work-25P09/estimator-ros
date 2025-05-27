@@ -1,6 +1,6 @@
 # Calibration
 
-Guide for calibration.
+Guide for calibration. More will be added soon.
 
 ## Optical sensor
 
