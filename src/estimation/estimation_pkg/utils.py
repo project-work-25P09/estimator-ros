@@ -1,4 +1,5 @@
 import numpy as np
+import quaternion
 from estimation_pkg.estimator_simple_ekf import SimpleEKF
 from estimation_pkg.estimator_imu_dead_reckoning import (
     DeadReckoningEstimator,
@@ -14,6 +15,16 @@ from estimation_pkg.estimator_complementary_filter_detect_lift import (
 )
 from estimation_pkg.estimator_optical import OpticalEstimator
 from estimation_pkg.estimator_optical_imu_integrator import OpticalImuIntegratorEstimator
+
+def quaternion_to_euler(q: quaternion.quaternion):
+    """
+    Convert a quaternion to Euler angles (yaw, pitch, roll).
+    """
+    w, x, y, z = q.w, q.x, q.y, q.z
+    yaw = np.arctan2(2.0 * (y * z + w * x), w * w - x * x - y * y + z * z)
+    pitch = np.arcsin(-2.0 * (x * z - w * y))
+    roll = np.arctan2(2.0 * (x * y + w * z), w * w + x * x - y * y - z * z)
+    return yaw, pitch, roll
 
 def get_estimator(name):
     if name == "simple_ekf":

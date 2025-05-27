@@ -84,15 +84,14 @@ class OpticalSensorNode(LifecycleNode):
             if event.type == ecodes.EV_REL:
                 point = Point()
                 if event.code == ecodes.REL_X:
-                    point.x = float(event.value)
-                else:
+                    point.y = -float(event.value)
                     point.x = 0.0
                 if event.code == ecodes.REL_Y:
-                    point.y = float(event.value)
-                else:
+                    point.x = -float(event.value)
                     point.y = 0.0
                 point.z = 0.0
                 self.publisher_.publish(point)
+
         self.get_logger().info('Event-reading thread stopped.')
 
     def publish_zero_point(self):

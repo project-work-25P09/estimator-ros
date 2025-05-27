@@ -5,7 +5,6 @@ from estimation.msg import Estimation, Measurements
 import rclpy
 import quaternion
 
-
 class OpticalImuIntegratorEstimator(Estimator):
     def __init__(self):
         self.reset()
@@ -14,7 +13,6 @@ class OpticalImuIntegratorEstimator(Estimator):
         self.p = np.zeros(3)
         self.v = np.zeros(3)
         self.q = quaternion.from_float_array([1.0, 0.0, 0.0, 0.0])
-        # self.q = np.array([1.0, 0.0, 0.0, 0.0])
         self.prev_time = None
         if not hasattr(self, 'last_mouse_integrated_x'):
             self.last_mouse_integrated_x = 0.0
@@ -37,10 +35,7 @@ class OpticalImuIntegratorEstimator(Estimator):
 
         self.q = quaternion.from_float_array([meas.est_orientation.w, meas.est_orientation.x, meas.est_orientation.y, meas.est_orientation.z])
 
-        # Optical flow vector in local frame
-        optical_flow_local = np.array([dy, dx, 0.0])
-        # optical_flow_local = np.array([-dx, dy, 0.0])
-        # Transform optical flow to global frame
+        optical_flow_local = np.array([dx, dy, 0.0])
         optical_flow_global = quaternion.rotate_vectors(self.q, optical_flow_local)
 
         self.p += optical_flow_global
@@ -50,8 +45,7 @@ class OpticalImuIntegratorEstimator(Estimator):
         msg.x = float(self.p[0])
         msg.y = float(self.p[1])
         msg.z = float(self.p[2])
-        yaw, pitch, roll = quaternion.as_euler_angles(self.q)
-        # yaw, pitch, roll = utils.quaternion_to_euler(self.q)
+        yaw, pitch, roll = utils.quaternion_to_euler(self.q)
         msg.yaw = float(yaw)
         msg.pitch = float(pitch)
         msg.roll = float(roll)

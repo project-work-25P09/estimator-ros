@@ -40,9 +40,9 @@ class ServerROS(Node):
             "yaw": msg.yaw,
             "pitch": msg.pitch,
             "roll": msg.roll,
-            "acc_x": msg.measurements.acceleration.x,
-            "acc_y": msg.measurements.acceleration.y,
-            "acc_z": msg.measurements.acceleration.z,
+            "acc_x": msg.measurements.linear_acceleration.x,
+            "acc_y": msg.measurements.linear_acceleration.y,
+            "acc_z": msg.measurements.linear_acceleration.z,
             "acc_yaw": msg.yaw,  # TODO: change
             "acc_pitch": msg.pitch,
             "acc_roll": msg.roll,
