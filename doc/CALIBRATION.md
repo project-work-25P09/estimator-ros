@@ -42,13 +42,16 @@ ros2 service call /mip/three_dm/device_settings/save std_srvs/srv/Empty "{}"
 
 ```bash
 # 1. Record magnetic sweep from all orientations for 2-3 minutes of motion
-ros2 bag record -o data/imu_calibration/magsweep
+ros2 bag record /imu/data /imu/data_raw /imu/mag -o data/imu_calibration/magsweep
 
 # 2. Stop IMU launcher
 
 # 3. Dump data to script to CSV and compute matrices
 ros2 run calibration dump_mag.py &
 ros2 bag play data/imu_calibration/magsweep
+
+# 4. Find calibration parameters (and put to IMU flash, check the script for flashing)
+python3 scripts/calibrate_soft_iron_hard_iron.py
 ```
 
 ### Verify IMU settings

@@ -1,5 +1,7 @@
 import numpy as np
-from ellipsoid_fit import Ellipsoid
+import mscl
+
+write_settings_to_imu_flash = False
 
 def fit_ellipsoid(data):
     # build design matrix D and vector d2
@@ -32,10 +34,23 @@ def fit_ellipsoid(data):
     M = evecs @ np.diag(1.0/radii) @ evecs.T
     return center, radii, M
 
-
-data = np.loadtxt('mag_samples.csv', delimiter=',', skiprows=1)
+data = np.loadtxt('data/magsweep_dump.csv', delimiter=',', skiprows=1)
 center, radii, soft_iron_matrix = fit_ellipsoid(data)
 hard_iron = center
 
 print("Hard-iron bias:", hard_iron)
 print("Soft-iron matrix:\n", soft_iron_matrix)
+
+if write_settings_to_imu_flash:
+    print("Connecting to IMU")
+    connection = mscl.Connection.Serial("/dev/imu", 115200)
+    node = mscl.InertialNode(connection)
+    node.setToIdle()
+
+    node.setMagnetometerHardIronOffset(b)
+    node.setMagnetometerSoftIronMatrix(S)
+
+    node.saveSettings()
+    print("Magnetometer calibration uploaded and saved!")
+else:
+    print("Skipped writing to IMU flash")

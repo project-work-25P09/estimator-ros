@@ -21,7 +21,6 @@ endif()
 
 install(PROGRAMS
   "scripts/dump_mag.py"
-  "scripts/in_field_mag_sweep.py"
   DESTINATION lib/${PROJECT_NAME}
 )
 
