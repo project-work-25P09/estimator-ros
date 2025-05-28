@@ -2,7 +2,7 @@
 
 Guide for calibration.
 
-## Optical sensor
+## Optical sensor calibration
 
 Calibrate `x` and `x` directions separately. Set the optical `x_to_m` and `y_to_m` parameters to `1.0` inside the `config/calibration.yml` file. Measure a distance of one meter on a flat table and place pieces of tape at each end. Run the optical sensor and estimation node to start recording, like so:
 
@@ -21,6 +21,16 @@ python3 scripts/calibrate_optical.py
 
 Place the estimated coefficients to `calibration.yml`.
 
-## IMU
+## IMU calibration
 
-TODO
+### Gyro bias
+
+```bash
+# TODO
+```
+
+### Magnetic sweep
+
+```bash
+# TODO
+```
