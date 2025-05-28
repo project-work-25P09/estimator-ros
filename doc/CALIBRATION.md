@@ -23,14 +23,36 @@ Place the estimated coefficients to `calibration.yml`.
 
 ## IMU calibration
 
+To calibrate the IMU, first launch the IMU:
+
+```bash
+ros2 launch microstrain_inertial_driver microstrain_launch.py params_file:=./config/imu_params.yml &
+```
+
 ### Gyro bias
 
 ```bash
-# TODO
+ros2 service call /mip/three_dm/capture_gyro_bias microstrain_inertial_msgs/srv/Mip3dmCaptureGyroBias "{}"
+
+# Save estimated bias to flash memory
+ros2 service call /mip/three_dm/device_settings/save std_srvs/srv/Empty "{}"
 ```
 
-### Magnetic sweep
+### Magnetic calibration (soft-iron and hard-iron)
 
 ```bash
-# TODO
+# 1. Record magnetic sweep from all orientations for 2-3 minutes of motion
+ros2 bag record -o data/imu_calibration/magsweep
+
+# 2. Stop IMU launcher
+
+# 3. Dump data to script to CSV and compute matrices
+ros2 run calibration dump_mag.py &
+ros2 bag play data/imu_calibration/magsweep
+```
+
+### Verify IMU settings
+
+```bash
+ros2 service call /mip/base/get_device_information microstrain_inertial_msgs/srv/MipBaseGetDeviceInformation "{}"
 ```
