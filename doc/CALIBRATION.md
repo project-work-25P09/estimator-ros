@@ -50,8 +50,9 @@ ros2 bag record /imu/data /imu/data_raw /imu/mag -o data/imu_calibration/magswee
 ros2 run calibration dump_mag.py &
 ros2 bag play data/imu_calibration/magsweep
 
-# 4. Find calibration parameters (and put to IMU flash, check the script for flashing)
-python3 scripts/calibrate_soft_iron_hard_iron.py
+# 4. Find calibration parameters
+python3 scripts/calibrate_soft_iron_hard_iron.py --flash=no
+python3 scripts/calibrate_soft_iron_hard_iron.py --flash=yes
 ```
 
 ### Verify IMU settings

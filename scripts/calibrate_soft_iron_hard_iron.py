@@ -1,8 +1,6 @@
 import numpy as np
 import mscl
 
-write_settings_to_imu_flash = False
-
 def fit_ellipsoid(data):
     # build design matrix D and vector d2
     x, y, z = data[:,0], data[:,1], data[:,2]
@@ -34,23 +32,46 @@ def fit_ellipsoid(data):
     M = evecs @ np.diag(1.0/radii) @ evecs.T
     return center, radii, M
 
-data = np.loadtxt('data/magsweep_dump.csv', delimiter=',', skiprows=1)
-center, radii, soft_iron_matrix = fit_ellipsoid(data)
-hard_iron = center
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="Calibrate magnetometer hard-iron and soft-iron biases.")
+    parser.add_argument('--flash', type=bool, default=False,
+                        help="Write settings to IMU flash memory (default: False)")
+    args = parser.parse_args()
+    write_settings_to_imu_flash = args.flash
 
-print("Hard-iron bias:", hard_iron)
-print("Soft-iron matrix:\n", soft_iron_matrix)
+    data = np.loadtxt('data/magsweep_dump.csv', delimiter=',', skiprows=1)
+    center, radii, soft_iron_matrix = fit_ellipsoid(data)
+    hard_iron = center
 
-if write_settings_to_imu_flash:
-    print("Connecting to IMU")
-    connection = mscl.Connection.Serial("/dev/imu", 115200)
-    node = mscl.InertialNode(connection)
-    node.setToIdle()
+    print("Hard-iron bias:", hard_iron)
+    print("Soft-iron matrix:\n", soft_iron_matrix)
 
-    node.setMagnetometerHardIronOffset(b)
-    node.setMagnetometerSoftIronMatrix(S)
+    if write_settings_to_imu_flash:
+        print("Connecting to IMU")
+        connection = mscl.Connection.Serial("/dev/ttyACM0", 115200)
+        # settings = mscl.SerialSettings("/dev/ttyACM0", 115200)
+        # settings.readTimeout(1000)
+        # settings.writeTimeout(1000)
+        # connection = mscl.Connection.Serial(settings)
+        node = mscl.InertialNode(connection)
+        for cls in (mscl.MipTypes.CLASS_AHRS_IMU, mscl.MipTypes.CLASS_GNSS, mscl.MipTypes.CLASS_ESTFILTER):
+            try:
+                node.enableDataStream(cls, False)
+            except mscl.Error_NotSupported:
+                pass
+        node.setToIdle()
 
-    node.saveSettings()
-    print("Magnetometer calibration uploaded and saved!")
-else:
-    print("Skipped writing to IMU flash")
+        b = center.tolist()
+        S = soft_iron_matrix[:3, :3].flatten().tolist()
+
+        print("Writing hard-iron and soft-iron settings to IMU flash...")
+        # node.setMagnetometerHardIronOffset(b)
+        # node.setMagnetometerSoftIronMatrix(S)
+        # node.saveSettings()
+        print("Magnetometer calibration uploaded and saved!")
+    else:
+        print("Skipped writing to IMU flash")
+
+if __name__ == "__main__":
+    main()
