@@ -133,27 +133,9 @@ ls /dev/imu /dev/optical
 ```bash
 cd ~
 wget https://github.com/LORD-MicroStrain/MSCL/releases/download/v67.1.0/MSCL_arm64_Python3.10_v67.1.0.deb
-
-# For system install, but will not work inside a conda envionment
-# sudo dpkg -i MSCL_arm64_Python3.10_v67.1.0.deb
-
-# Installing inside a conda environment
-# mkdir mscl-extract
-# cd mscl-extract
-# ar x ../MSCL_arm64_Python3.10_v67.1.0.deb
-# tar -xzf data.tar.gz
-
-# conda activate estimator-ros
-# ENV_PKGS="$(python -c 'import site; print(site.getsitepackages()[0])')"
-
-# ln -s "$(pwd)/usr/lib/python3/dist-packages/mscl"l* "$ENV_PKGS/"
-
 dpkg-deb -x MSCL_arm64_Python3.10_v67.1.0.deb mscl-extract
 
 conda activate estimator-ros
 ENV_PKGS="$(python -c 'import site; print(site.getsitepackages()[0])')"
 cp -r mscl-extract/usr/lib/python3.10/dist-packages/* "$ENV_PKGS/"
-
-# git clone https://github.com/LORD-MicroStrain/MSCL --depth 1
-
 ```

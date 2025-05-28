@@ -50,25 +50,21 @@ def main():
     if write_settings_to_imu_flash:
         print("Connecting to IMU")
         connection = mscl.Connection.Serial("/dev/ttyACM0", 115200)
-        # settings = mscl.SerialSettings("/dev/ttyACM0", 115200)
-        # settings.readTimeout(1000)
-        # settings.writeTimeout(1000)
-        # connection = mscl.Connection.Serial(settings)
         node = mscl.InertialNode(connection)
-        for cls in (mscl.MipTypes.CLASS_AHRS_IMU, mscl.MipTypes.CLASS_GNSS, mscl.MipTypes.CLASS_ESTFILTER):
-            try:
-                node.enableDataStream(cls, False)
-            except mscl.Error_NotSupported:
-                pass
+        # for cls in (mscl.MipTypes.CLASS_AHRS_IMU, mscl.MipTypes.CLASS_GNSS, mscl.MipTypes.CLASS_ESTFILTER):
+        #     try:
+        #         node.enableDataStream(cls, False)
+        #     except mscl.Error_NotSupported:
+        #         pass
         node.setToIdle()
 
         b = center.tolist()
         S = soft_iron_matrix[:3, :3].flatten().tolist()
 
         print("Writing hard-iron and soft-iron settings to IMU flash...")
-        # node.setMagnetometerHardIronOffset(b)
-        # node.setMagnetometerSoftIronMatrix(S)
-        # node.saveSettings()
+        node.setMagnetometerHardIronOffset(b)
+        node.setMagnetometerSoftIronMatrix(S)
+        node.saveSettings()
         print("Magnetometer calibration uploaded and saved!")
     else:
         print("Skipped writing to IMU flash")
