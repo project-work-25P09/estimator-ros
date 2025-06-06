@@ -127,3 +127,15 @@ Test that devices are recognized:
 ```bash
 ls /dev/imu /dev/optical
 ```
+
+## Installing MSCL (for flashing IMU with calibration parameters)
+
+```bash
+cd ~
+wget https://github.com/LORD-MicroStrain/MSCL/releases/download/v67.1.0/MSCL_arm64_Python3.10_v67.1.0.deb
+dpkg-deb -x MSCL_arm64_Python3.10_v67.1.0.deb mscl-extract
+
+conda activate estimator-ros
+ENV_PKGS="$(python -c 'import site; print(site.getsitepackages()[0])')"
+cp -r mscl-extract/usr/lib/python3.10/dist-packages/* "$ENV_PKGS/"
+```
